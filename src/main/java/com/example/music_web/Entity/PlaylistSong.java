@@ -27,12 +27,5 @@ public class PlaylistSong {
 
     // Getters and setters...
 }
-@Embeddable
-public class PlaylistSongId implements Serializable {
-    private Long playlistId;
-    private Long songId;
-
-    // Getters, setters, equals, and hashCode...
-}
 
 
