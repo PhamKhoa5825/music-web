@@ -1,11 +1,17 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "playlist_songs")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class PlaylistSong {
 
     @EmbeddedId
@@ -23,9 +29,8 @@ public class PlaylistSong {
 
     private Integer trackOrder; // Thêm trường thứ tự bài hát trong playlist
 
+    @Builder.Default
     private LocalDateTime addedAt = LocalDateTime.now(); // Thời điểm thêm vào
-
-    // Getters and setters...
 }
 
 

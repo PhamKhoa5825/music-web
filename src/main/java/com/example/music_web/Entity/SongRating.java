@@ -1,6 +1,7 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -9,6 +10,11 @@ import java.time.LocalDateTime;
 @Table(uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "song_id"})
 })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class SongRating {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

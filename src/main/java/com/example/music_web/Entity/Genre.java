@@ -1,9 +1,15 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "genres")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Genre {
 
     @Id

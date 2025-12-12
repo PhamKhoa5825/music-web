@@ -2,12 +2,18 @@ package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.management.relation.Role;
 
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
     @Id

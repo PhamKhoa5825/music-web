@@ -3,10 +3,16 @@ package com.example.music_web.Entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Album {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,9 +30,11 @@ public class Album {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "artist_id")
+    @ToString.Exclude
     private Artist artist; // Album thuộc về một Artist
 
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<Song> songs; // Một Album có nhiều Song
 
     @CreationTimestamp
