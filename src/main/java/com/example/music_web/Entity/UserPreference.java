@@ -5,6 +5,7 @@ import lombok.*;
 import java.util.List;
 
 @Entity
+@Table(name = "user_preferences")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,12 +22,20 @@ public class UserPreference {
     private User user;
 
     @ManyToMany
-    @JoinTable(name = "preferred_genres")
+    @JoinTable(
+            name = "preferred_genres", // Tên bảng trung gian
+            joinColumns = @JoinColumn(name = "user_preference_id"), // Khóa ngoại trỏ về bảng này (UserPreference)
+            inverseJoinColumns = @JoinColumn(name = "genre_id")     // Khóa ngoại trỏ về bảng kia (Genre)
+    )
     @ToString.Exclude // BẮT BUỘC
     private List<Genre> favoriteGenres;
 
     @ManyToMany
-    @JoinTable(name = "preferred_artists")
+    @JoinTable(
+            name = "preferred_artists",
+            joinColumns = @JoinColumn(name = "user_preference_id"),
+            inverseJoinColumns = @JoinColumn(name = "artist_id")
+    )
     @ToString.Exclude // BẮT BUỘC
     private List<Artist> favoriteArtists;
 

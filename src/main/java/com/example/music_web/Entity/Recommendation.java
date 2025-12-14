@@ -6,6 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
+@Table(name = "recommendations")
 @Getter
 @Setter
 @NoArgsConstructor

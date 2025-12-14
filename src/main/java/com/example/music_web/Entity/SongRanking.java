@@ -27,7 +27,7 @@ public class SongRanking {
     private LocalDate rankingDate;
 
     @Column(nullable = false)
-    private Integer rank;
+    private Integer ranks;
 
     private Integer totalViews; // Số lượt xem trong ngày/chu kỳ này
 }

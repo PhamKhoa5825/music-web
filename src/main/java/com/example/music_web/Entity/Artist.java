@@ -3,6 +3,7 @@ package com.example.music_web.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "artists")
@@ -25,12 +26,14 @@ public class Artist {
 
     // Bổ sung quan hệ ngược (nếu bạn muốn lấy list bài hát từ Artist)
     @OneToMany(mappedBy = "artist")
+    @JsonIgnore //Khi lấy Artist, không lôi hết bài hát ra
     @ToString.Exclude
     private List<Song> songs;
 
     // Bổ sung quan hệ ngược (lấy list album)
     @OneToMany(mappedBy = "artist")
     @ToString.Exclude
+    @JsonIgnore
     private List<Album> albums;
 }
 

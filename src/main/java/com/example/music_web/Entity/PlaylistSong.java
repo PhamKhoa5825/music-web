@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "playlist_songs")
@@ -20,6 +21,7 @@ public class PlaylistSong {
     @ManyToOne
     @MapsId("playlistId")
     @JoinColumn(name = "playlist_id")
+    @JsonIgnore // Để khi xem bài hát trong playlist, nó không in ngược lại thông tin playlist nữa
     private Playlist playlist;
 
     @ManyToOne

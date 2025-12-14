@@ -10,5 +10,5 @@ import java.util.List;
 @Repository
 public interface SongRankingRepository extends JpaRepository<SongRanking, Long> {
     // Lấy top 10 bài hát theo ngày
-    List<SongRanking> findTop10ByRankingDateOrderByRankAsc(LocalDate date);
+    List<SongRanking> findTop10ByRankingDateOrderByRanksAsc(LocalDate date);
 }

@@ -6,8 +6,10 @@ import java.util.List;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
+@Table(name = "albums")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,6 +37,7 @@ public class Album {
 
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL)
     @ToString.Exclude
+    @JsonIgnore // <--- Thêm dòng này: Khi lấy Album, không load lại list Songs
     private List<Song> songs; // Một Album có nhiều Song
 
     @CreationTimestamp

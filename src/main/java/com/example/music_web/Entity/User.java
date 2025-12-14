@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import javax.management.relation.Role;
-
 @Entity
 @Table(name = "users")
 @Getter

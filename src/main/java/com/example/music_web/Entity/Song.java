@@ -55,5 +55,9 @@ public class Song {
     private Double averageRating;
     private Integer totalRatings;
     private String audioFeatures; // JSON/TEXT
+
+    @Builder.Default
+    @Column(name = "is_hidden", nullable = false, columnDefinition = "boolean default false")
+    private Boolean isHidden = false; // false = Hiện (Visible), true = Ẩn (Hidden)
 }
 
