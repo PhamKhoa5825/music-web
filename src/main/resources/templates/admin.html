@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Admin Dashboard - Music AI</title>
+  <style>
+    /* --- Kế thừa Style Cyberpunk từ Profile.html --- */
+    :root {
+      --primary: #00f3ff;
+      --primary-dark: #00b8c4;
+      --secondary: #ff3366;
+      --bg-dark: #050505;
+      --bg-card: rgba(17, 17, 17, 0.9);
+      --text-light: #f0f0f0;
+      --text-muted: #888888;
+      --border-color: #333;
+      --danger: #ff3333;
+      --shadow-glow: 0 0 15px rgba(0, 243, 255, 0.2);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.05) 0%, transparent 50%);
+    }
+
+    /* --- Layout --- */
+    header {
+      background: rgba(10, 10, 10, 0.95);
+      border-bottom: 1px solid var(--primary);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    /* --- Cards & Tables --- */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Hiệu ứng viền neon bên trái */
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+      background: linear-gradient(180deg, var(--primary), var(--secondary));
+    }
+
+    .card h2 {
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+      border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+      padding-bottom: 0.5rem;
+    }
+
+    /* Table Styling */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 1rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--primary);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid #222;
+      color: var(--text-light);
+    }
+
+    tr:hover td {
+      background: rgba(0, 243, 255, 0.05);
+    }
+
+    /* Badges */
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .role-admin { background: rgba(255, 51, 102, 0.2); color: var(--secondary); border: 1px solid var(--secondary); }
+    .role-user { background: rgba(0, 243, 255, 0.1); color: var(--primary); border: 1px solid var(--primary); }
+
+    /* Buttons */
+    .btn-logout {
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .btn-logout:hover { background: var(--danger); color: #fff; }
+
+    .log-time { color: var(--text-muted); font-size: 0.85rem; font-family: monospace; }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>
+    <span>🛡️</span> Admin Center
+  </h1>
+  <div>
+    <span style="margin-right: 15px; color: var(--text-muted);">Signed in as <b style="color: var(--primary);">Admin</b></span>
+    <a href="/logout" class="btn-logout">LOGOUT</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>👥 User Management</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Role</th>
+          <th>Joined At</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="user : ${users}">
+          <td th:text="'#' + ${user.userId}">#1</td>
+          <td style="font-weight: bold; color: #fff;" th:text="${user.username}">admin</td>
+          <td>
+                            <span th:class="${'badge ' + (user.role.name() == 'ADMIN' ? 'role-admin' : 'role-user')}"
+                                  th:text="${user.role}">ADMIN</span>
+          </td>
+          <td class="log-time" th:text="${#temporals.format(user.createdAt, 'dd-MM-yyyy HH:mm')}">12-10-2025</td>
+          <td><span style="color: var(--primary);">● Active</span></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📜 System Logs</h2>
+    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+      <table>
+        <thead>
+        <tr>
+          <th style="width: 150px;">Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="log : ${logs}">
+          <td class="log-time" th:text="${#temporals.format(log.time, 'HH:mm:ss dd/MM')}">10:30</td>
+
+          <td th:if="${log.user != null}" th:text="${log.user.username}">user1</td>
+          <td th:if="${log.user == null}" style="color: #666;">Unknown</td>
+
+          <td style="color: var(--secondary); font-weight: bold;" th:text="${log.action}">LOGIN</td>
+          <td th:text="${log.description}">User logged in successfully</td>
+        </tr>
+
+        <tr th:if="${#lists.isEmpty(logs)}">
+          <td colspan="4" style="text-align: center; padding: 20px; color: #666;">
+            No system activity recorded yet.
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
