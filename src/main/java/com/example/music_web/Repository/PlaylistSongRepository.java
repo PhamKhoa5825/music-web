@@ -11,4 +11,7 @@ import java.util.Optional;
 public interface PlaylistSongRepository extends JpaRepository<PlaylistSong, PlaylistSongId> {
     Integer countByPlaylist(Playlist playlist);
     Optional<PlaylistSong> findByPlaylist_PlaylistIdAndSong_SongId(Long playlistId, Long songId);
+
+    // Kiểm tra bài hát đã có trong playlist chưa (trả về true/false)
+    boolean existsByPlaylist_PlaylistIdAndSong_SongId(Long playlistId, Long songId);
 }

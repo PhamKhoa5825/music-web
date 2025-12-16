@@ -1,27 +1,49 @@
 package com.example.music_web.Service;
 
 import com.example.music_web.DTO.RatingRequest;
-import com.example.music_web.Entity.*;
-import com.example.music_web.Repository.*;
+import com.example.music_web.Entity.Song;
+import com.example.music_web.Entity.SongRating;
+import com.example.music_web.Entity.User;
+import com.example.music_web.Repository.SongRatingRepository;
+import com.example.music_web.Repository.SongRepository;
+import com.example.music_web.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RatingService {
+
     @Autowired private SongRatingRepository ratingRepository;
-    @Autowired private UserRepository userRepository;
     @Autowired private SongRepository songRepository;
+    @Autowired private UserRepository userRepository;
 
-    public SongRating addRating(RatingRequest request) {
-        User user = userRepository.findById(request.getUserId()).orElseThrow();
-        Song song = songRepository.findById(request.getSongId()).orElseThrow();
+    @Transactional
+    public SongRating addRating(RatingRequest req) {
+        User user = userRepository.findById(req.getUserId()).orElseThrow();
+        Song song = songRepository.findById(req.getSongId()).orElseThrow();
 
-        SongRating rating = new SongRating();
-        rating.setUser(user);
-        rating.setSong(song);
-        rating.setRating(request.getRating());
-        rating.setReview(request.getReview());
+        // 1. Lưu hoặc Cập nhật Rating của User
+        SongRating rating = ratingRepository.findByUserAndSong(user, song)
+                .orElse(SongRating.builder().user(user).song(song).build());
 
-        return ratingRepository.save(rating);
+        rating.setRating(req.getRating());
+        rating.setReview(req.getReview());
+        SongRating savedRating = ratingRepository.save(rating);
+
+        // --- 2. TÍNH TOÁN LẠI TRUNG BÌNH NGAY LẬP TỨC ---
+        // Gọi hàm tính trung bình từ Repository (đã khai báo ở các bước trước)
+        Double newAverage = ratingRepository.getAverageRating(song.getSongId());
+        Long totalCount = ratingRepository.countBySongSongId(song.getSongId());
+
+        // Nếu chưa có ai đánh giá thì set mặc định
+        if (newAverage == null) newAverage = 0.0;
+
+        // 3. Cập nhật ngược lại vào bảng Song để Frontend hiển thị
+        song.setAverageRating(newAverage);
+        song.setTotalRatings(totalCount.intValue());
+        songRepository.save(song);
+
+        return savedRating;
     }
 }

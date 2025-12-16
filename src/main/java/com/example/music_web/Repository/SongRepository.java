@@ -2,6 +2,7 @@ package com.example.music_web.Repository;
 
 import com.example.music_web.Entity.Genre;
 import com.example.music_web.Entity.Song;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,10 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     // Tìm bài hát thuộc danh sách các thể loại (cho gợi ý)
     @Query("SELECT DISTINCT s FROM Song s JOIN s.genres g WHERE g IN :genres")
     List<Song> findByGenresIn(@Param("genres") Set<Genre> genres);
+
+    // Tìm 5 bài hát cùng thể loại (trừ bài hiện tại)
+    @Query("SELECT DISTINCT s FROM Song s JOIN s.genres g WHERE g IN :genres AND s.songId <> :currentSongId")
+    List<Song> findRelatedSongs(@Param("genres") List<Genre> genres, @Param("currentSongId") Long currentSongId, Pageable pageable);
 
     // --- 1. LẤY TẤT CẢ BÀI HÁT ĐANG HIỆN (Cho Dashboard) ---
     List<Song> findByIsHiddenFalse();

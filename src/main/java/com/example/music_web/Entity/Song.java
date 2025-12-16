@@ -52,9 +52,17 @@ public class Song {
     private LocalDateTime uploadDate = LocalDateTime.now();
 
     // Các trường phục vụ AI từ Set 1
-    private Double averageRating;
-    private Integer totalRatings;
+    @Column(name = "average_rating")
+    private Double averageRating = 0.0; // Thêm giá trị mặc định 0.0
+
+    @Column(name = "total_ratings")
+    private Integer totalRatings = 0;   // Thêm giá trị mặc định 0
     private String audioFeatures; // JSON/TEXT
+
+    @Column(columnDefinition = "TEXT")
+    private String lyrics; // Lời bài hát
+
+    private String backgroundImage;
 
     @Builder.Default
     @Column(name = "is_hidden", nullable = false, columnDefinition = "boolean default false")
