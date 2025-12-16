@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Analytics - MusicPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sidebar { min-height: 100vh; background: #212529; color: white; }
+        .sidebar a { color: #adb5bd; padding: 12px 20px; text-decoration: none; display: block; border-left: 3px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background: #1a1e21; color: #00e5ff; border-left-color: #00e5ff; }
+        .card-stat { border: none; border-radius: 8px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .filter-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .big-number { font-size: 2.5rem; font-weight: bold; color: #1db954; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    <div class="sidebar d-flex flex-column flex-shrink-0 p-3" style="width: 260px;">
+        <h4 class="text-center fw-bold mb-4 text-white"><i class="bi bi-soundwave me-2"></i>ADMIN</h4>
+        <a href="/admin/dashboard" class="active"><i class="bi bi-bar-chart-fill me-2"></i>Thống Kê</a>
+        <a href="/admin/reports"><i class="bi bi-flag-fill me-2"></i>Báo Cáo <span class="badge bg-danger ms-1" th:text="${pendingReports}">0</span></a>
+        <a href="/admin/songs"><i class="bi bi-music-note-list me-2"></i>Kho Nhạc</a>
+        <a href="/home" class="mt-auto border-top border-secondary pt-3"><i class="bi bi-box-arrow-left me-2"></i>Về Trang Chủ</a>
+    </div>
+
+    <div class="flex-grow-1 p-4 bg-light">
+        <h3 class="mb-4 fw-bold text-dark">Dashboard Tổng Quan</h3>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card card-stat bg-primary p-3">
+                    <h3><i class="bi bi-music-note-beamed"></i> <span th:text="${totalSongs}">0</span></h3>
+                    <small>Tổng bài hát</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-success p-3">
+                    <h3><i class="bi bi-play-circle-fill"></i> <span th:text="${totalPlays}">0</span></h3>
+                    <small>Tổng lượt nghe toàn hệ thống</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-warning text-dark p-3">
+                    <h3><i class="bi bi-people-fill"></i> <span th:text="${totalUsers}">0</span></h3>
+                    <small>Thành viên</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-danger p-3">
+                    <h3><i class="bi bi-shield-exclamation"></i> <span th:text="${pendingReports}">0</span></h3>
+                    <small>Cần xử lý</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-graph-up me-2"></i>Biểu Đồ Xu Hướng</h5>
+
+            <div class="d-flex flex-wrap gap-3 align-items-end mb-3">
+                <div>
+                    <label class="form-label small fw-bold text-muted">Chế độ xem:</label>
+                    <select id="chart-mode" class="form-select" onchange="toggleChartInputs()">
+                        <option value="MONTH" selected>Các tháng trong năm</option>
+                        <option value="HOUR">Khung giờ (24h)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small fw-bold text-muted">Chọn Năm:</label>
+                    <select id="chart-year" class="form-select" onchange="loadChart()">
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small fw-bold text-muted">Thể loại:</label>
+                    <select id="chart-genre" class="form-select" onchange="loadChart()">
+                        <option value="">-- Tất cả --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="height: 350px;">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="filter-section mt-4">
+            <h5 class="fw-bold mb-3 border-bottom pb-2 text-primary"><i class="bi bi-search me-2"></i>Tra Cứu Chi Tiết & Top Bài Hát</h5>
+
+            <div class="row g-3 align-items-end mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">1. Chọn loại thời gian:</label>
+                    <select id="detail-type" class="form-select" onchange="toggleDetailInputs()">
+                        <option value="DATE">Theo Ngày cụ thể</option>
+                        <option value="MONTH">Theo Tháng</option>
+                        <option value="YEAR">Theo Năm</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">2. Chọn thời gian:</label>
+                    <input type="date" id="input-date" class="form-control detail-input">
+                    <input type="month" id="input-month" class="form-control detail-input d-none">
+                    <select id="input-year" class="form-select detail-input d-none">
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" onclick="loadDetailStats()">
+                        <i class="bi bi-eye"></i> Xem Kết Quả
+                    </button>
+                </div>
+            </div>
+
+            <div id="detail-result" class="d-none">
+                <div class="row mb-4">
+                    <div class="col-md-12 text-center">
+                        <div class="card bg-light border-0 p-3">
+                            <h6 class="text-muted text-uppercase">Tổng lượt nghe trong thời gian chọn</h6>
+                            <div class="big-number" id="detail-total-view">0</div>
+                            <small class="text-muted">lượt phát</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-3">Top Bài Hát Nghe Nhiều Nhất:</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle border">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Tên Bài Hát</th>
+                            <th>Nghệ Sĩ</th>
+                            <th>Thể Loại</th>
+                            <th class="text-end">Lượt Nghe</th>
+                        </tr>
+                        </thead>
+                        <tbody id="detail-song-list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="none">
+    const API_ADMIN = "/admin/api";
+    let myChart = null;
+
+    // --- INIT ---
+    function init() {
+        initYears('chart-year'); // Năm cho biểu đồ
+        initYears('input-year'); // Năm cho phần chi tiết
+        loadGenres();
+
+        // Set ngày hôm nay mặc định cho input date
+        document.getElementById('input-date').valueAsDate = new Date();
+
+        loadChart(); // Vẽ biểu đồ mặc định
+    }
+
+    function initYears(elementId) {
+        const select = document.getElementById(elementId);
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i >= currentYear - 4; i--) {
+            select.innerHTML += `<option value="${i}">${i}</option>`;
+        }
+    }
+
+    async function loadGenres() {
+        try {
+            const res = await fetch(API_ADMIN + '/genres');
+            const genres = await res.json();
+            const select = document.getElementById('chart-genre');
+            genres.forEach(g => select.innerHTML += `<option value="${g.genreId}">${g.name}</option>`);
+        } catch(e) {}
+    }
+
+    // --- PHẦN 1: BIỂU ĐỒ (LOGIC CŨ) ---
+    function toggleChartInputs() { loadChart(); } // Đơn giản là vẽ lại
+
+    async function loadChart() {
+        const mode = document.getElementById('chart-mode').value;
+        const year = document.getElementById('chart-year').value;
+        const genreId = document.getElementById('chart-genre').value;
+
+        let url = `${API_ADMIN}/stats/advanced?mode=${mode}&year=${year}`;
+        if(genreId) url += `&genreId=${genreId}`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+
+            let labels = [], values = [];
+            if (mode === 'HOUR') {
+                const fullData = new Array(24).fill(0);
+                data.forEach(item => fullData[item[0]] = item[1]);
+                labels = Array.from({length: 24}, (_, i) => i + 'h');
+                values = fullData;
+            } else {
+                const fullData = new Array(12).fill(0);
+                data.forEach(item => fullData[item[0] - 1] = item[1]);
+                labels = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+                values = fullData;
+            }
+
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Lượt nghe',
+                        data: values,
+                        borderColor: '#00e5ff',
+                        backgroundColor: 'rgba(0, 229, 255, 0.1)',
+                        fill: true, tension: 0.3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    // --- PHẦN 2: TRA CỨU CHI TIẾT (LOGIC MỚI) ---
+
+    function toggleDetailInputs() {
+        const type = document.getElementById('detail-type').value;
+        // Ẩn hết input trước
+        document.querySelectorAll('.detail-input').forEach(el => el.classList.add('d-none'));
+
+        // Hiện input phù hợp
+        if (type === 'DATE') document.getElementById('input-date').classList.remove('d-none');
+        if (type === 'MONTH') document.getElementById('input-month').classList.remove('d-none');
+        if (type === 'YEAR') document.getElementById('input-year').classList.remove('d-none');
+    }
+
+    async function loadDetailStats() {
+        const type = document.getElementById('detail-type').value;
+        let value = "";
+
+        if (type === 'DATE') value = document.getElementById('input-date').value;
+        if (type === 'MONTH') value = document.getElementById('input-month').value;
+        if (type === 'YEAR') value = document.getElementById('input-year').value;
+
+        if (!value) { alert("Vui lòng chọn thời gian!"); return; }
+
+        try {
+            const res = await fetch(`${API_ADMIN}/stats/detail?type=${type}&value=${value}`);
+            if(!res.ok) throw new Error();
+            const data = await res.json();
+
+            // Hiển thị kết quả
+            document.getElementById('detail-result').classList.remove('d-none');
+            document.getElementById('detail-total-view').innerText = data.totalViews.toLocaleString();
+
+            const tbody = document.getElementById('detail-song-list');
+            tbody.innerHTML = '';
+
+            if (data.songs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3">Không có dữ liệu trong khoảng thời gian này</td></tr>';
+            } else {
+                data.songs.forEach((item, index) => {
+                    const song = item[0];
+                    const views = item[1];
+                    // item[0] là Song Object, item[1] là count
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td class="fw-bold text-primary">${song.title}</td>
+                            <td>${song.artist ? song.artist.name : 'Unknown'}</td>
+                            <td>${song.genres.map(g => g.name).join(', ')}</td>
+                            <td class="text-end fw-bold">${views}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+        } catch(e) {
+            alert("Không tải được dữ liệu chi tiết. Kiểm tra lại console.");
+            console.error(e);
+        }
+    }
+
+    // Run Init
+    init();
+</script>
+</body>
+</html>

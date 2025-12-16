@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thư viện cá nhân - MusicPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #121212; font-family: 'Segoe UI', sans-serif; color: white; overflow-x: hidden; }
+
+        /* --- SIDEBAR STYLE --- */
+        .sidebar { background: #000; border-right: 1px solid #333; transition: all 0.3s; }
+        .nav-link { color: #b3b3b3; transition: 0.2s; font-weight: 500; padding: 10px 16px; border-radius: 4px; }
+        .nav-link:hover, .nav-link.active-tab { color: white; background-color: #282828; }
+        .active-tab i { color: #1db954 !important; }
+
+        /* Icon styles */
+        .sidebar i { width: 24px; display: inline-block; text-align: center; margin-right: 10px; }
+        .hover-scale { transition: transform 0.2s; }
+        .hover-scale:hover { transform: scale(1.2); color: #fff !important; }
+
+        /* --- MAIN CONTENT STYLE --- */
+        .main-content { margin-left: 240px; padding: 20px 30px; padding-bottom: 100px; }
+
+        /* Card Style (Spotify) */
+        .custom-card {
+            background-color: #181818; padding: 16px; border-radius: 8px;
+            transition: background-color 0.3s ease; cursor: pointer; height: 100%; position: relative;
+        }
+        .custom-card:hover { background-color: #282828; }
+        .custom-card img {
+            width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 4px; margin-bottom: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        /* Play Button on Hover */
+        .play-btn-hover {
+            position: absolute; right: 20px; bottom: 80px;
+            width: 48px; height: 48px; border-radius: 50%;
+            background-color: #1db954; color: black;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; opacity: 0; transition: all 0.3s ease;
+            transform: translateY(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .custom-card:hover .play-btn-hover { opacity: 1; transform: translateY(0); }
+
+        /* --- MODAL DARK THEME --- */
+        .modal-content { background-color: #282828; color: white; border: 1px solid #444; }
+        .modal-header { border-bottom: 1px solid #444; }
+        .modal-footer { border-top: 1px solid #444; }
+        .form-control { background-color: #3e3e3e; border: 1px solid #555; color: white; }
+        .form-control:focus { background-color: #3e3e3e; color: white; border-color: #1db954; box-shadow: none; }
+        .form-control::placeholder { color: #b3b3b3; }
+        .btn-close-white { filter: invert(1) grayscale(100%) brightness(200%); }
+    </style>
+</head>
+<body>
+
+<div class="sidebar position-fixed top-0 start-0 h-100" style="width: 240px; padding-top: 24px; z-index: 1000;">
+    <div class="px-4 mb-4">
+        <h4 class="fw-bold text-white"><i class="bi bi-music-note-beamed" style="color:#1db954"></i> MusicPro</h4>
+    </div>
+
+    <div class="nav flex-column px-2 gap-1">
+        <a href="/home" class="nav-link"><i class="bi bi-house-door"></i>Trang chủ</a>
+
+        <a href="#" onclick="switchView('foryou')" class="nav-link" id="link-foryou">
+            <i class="bi bi-stars" style="color: #e91e63;"></i>Dành cho bạn
+        </a>
+
+        <div class="mt-4 px-3 text-uppercase small text-secondary fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">Thư viện</div>
+
+        <a href="#" onclick="switchView('liked')" class="nav-link" id="link-liked">
+            <i class="bi bi-heart-fill text-danger"></i>Bài hát yêu thích
+        </a>
+        <a href="#" onclick="switchView('history')" class="nav-link" id="link-history">
+            <i class="bi bi-clock-history text-warning"></i>Nghe gần đây
+        </a>
+
+        <hr class="border-secondary mx-3 opacity-25 my-3">
+
+        <div class="d-flex justify-content-between align-items-center px-3 mb-2">
+            <span class="text-uppercase small text-secondary fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Playlist</span>
+            <i class="bi bi-plus-circle text-secondary cursor-pointer hover-scale" onclick="openCreateModal()" title="Tạo playlist mới" style="cursor: pointer;"></i>
+        </div>
+
+        <div id="sidebar-playlists" class="px-2 overflow-auto" style="max-height: 40vh;">
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="d-flex align-items-center justify-content-between mb-4 sticky-top py-3" style="background-color: #121212; border-bottom: 1px solid #333; top: 0; z-index: 900;">
+        <h2 class="fw-bold mb-0" id="page-title">Dành cho bạn</h2>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-white-50 small">UID: <span id="display-uid" class="text-white">--</span></span>
+            <img src="https://github.com/mdo.png" width="32" class="rounded-circle border border-secondary">
+        </div>
+    </div>
+
+    <div id="view-foryou" class="content-view">
+        <div class="mb-5">
+            <h3 class="fw-bold mb-3">Daily Mix <span class="fs-6 text-white-50 fw-normal ms-2">Tuyển tập riêng</span></h3>
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="foryou-mix-list">
+                <div class="col"><div class="spinner-border text-success"></div></div>
+            </div>
+        </div>
+        <div class="mb-5">
+            <h3 class="fw-bold mb-3">Xu hướng <span class="fs-6 text-white-50 fw-normal ms-2">Top thịnh hành</span></h3>
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="foryou-trend-list"></div>
+        </div>
+        <div class="mb-5">
+            <h3 class="fw-bold mb-3">Khám phá <span class="fs-6 text-white-50 fw-normal ms-2">Có thể bạn chưa nghe</span></h3>
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="foryou-discovery-list"></div>
+        </div>
+    </div>
+
+    <div id="view-liked" class="content-view d-none">
+        <div class="d-flex align-items-end gap-3 mb-4 p-4 rounded" style="background: linear-gradient(135deg, #450af5, #8e2de2);">
+            <i class="bi bi-heart-fill display-1 text-white shadow"></i>
+            <div>
+                <span class="text-white small fw-bold">PLAYLIST</span>
+                <h1 class="display-4 fw-bold text-white mb-0">Bài Hát Đã Thích</h1>
+                <div class="text-white-50 mt-2">Danh sách các bài hát bạn đã thả tim</div>
+            </div>
+        </div>
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="liked-songs-grid"></div>
+    </div>
+
+    <div id="view-history" class="content-view d-none">
+        <h3 class="fw-bold mb-4">Lịch sử nghe nhạc</h3>
+        <table class="table table-dark table-hover bg-transparent align-middle">
+            <thead class="text-secondary small border-bottom border-secondary">
+            <tr><th>#</th><th>BÀI HÁT</th><th>NGHỆ SĨ</th><th>THỜI GIAN</th></tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="createPlModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tạo Playlist Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label text-white-50 small fw-bold">TÊN PLAYLIST</label>
+                    <input type="text" id="newPlName" class="form-control form-control-lg" placeholder="Nhập tên playlist...">
+                </div>
+                <div class="form-check form-switch bg-dark border border-secondary rounded p-3 d-flex align-items-center">
+                    <input class="form-check-input ms-0 me-3" type="checkbox" role="switch" id="isPublicCheck" checked onchange="updatePublicLabel()" style="width: 3em; height: 1.5em; cursor: pointer;">
+                    <div>
+                        <span id="label-public" class="fw-bold text-success d-block">Công khai</span>
+                        <small class="text-white-50" style="font-size: 0.8em">Mọi người có thể nhìn thấy playlist này</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-transparent text-white fw-bold" data-bs-dismiss="modal">Hủy</button>
+                <button class="btn btn-success rounded-pill px-4 fw-bold" onclick="createPlaylist()">Tạo Playlist</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // --- GLOBAL CONFIG ---
+    const USER_ID = localStorage.getItem('music_user_id') || 1;
+    document.getElementById('display-uid').innerText = USER_ID;
+    const API = "/api";
+
+    // --- 1. SIDEBAR & PLAYLIST LOGIC (ĐÃ KHÔI PHỤC) ---
+
+    // Load danh sách Playlist vào Sidebar
+    async function loadSidebarPlaylists() {
+        try {
+            const res = await fetch(`${API}/playlists/user/${USER_ID}`);
+            const data = await res.json();
+            const container = document.getElementById('sidebar-playlists');
+            container.innerHTML = '';
+
+            data.forEach(p => {
+                // Link trỏ về trang chi tiết Playlist
+                container.innerHTML += `
+                    <a href="/playlist/${p.playlistId}" class="nav-link text-truncate py-2">
+                        <i class="bi bi-music-note-list text-white-50"></i> ${p.name}
+                    </a>`;
+            });
+        } catch(e) { console.error("Err loading sidebar:", e); }
+    }
+
+    // Mở Modal Tạo Playlist
+    function openCreateModal() {
+        document.getElementById('newPlName').value = '';
+        document.getElementById('isPublicCheck').checked = true;
+        updatePublicLabel();
+        new bootstrap.Modal(document.getElementById('createPlModal')).show();
+    }
+
+    // Cập nhật text toggle (Công khai / Riêng tư)
+    function updatePublicLabel() {
+        const isChecked = document.getElementById('isPublicCheck').checked;
+        const label = document.getElementById('label-public');
+        if(isChecked) {
+            label.innerText = "Công khai";
+            label.className = "fw-bold text-success d-block";
+        } else {
+            label.innerText = "Riêng tư";
+            label.className = "fw-bold text-danger d-block";
+        }
+    }
+
+    // Gọi API Tạo Playlist
+    async function createPlaylist() {
+        const name = document.getElementById('newPlName').value;
+        const isPublic = document.getElementById('isPublicCheck').checked;
+
+        if(!name.trim()) return alert("Vui lòng nhập tên Playlist!");
+
+        try {
+            const res = await fetch(`${API}/playlists`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ userId: USER_ID, name: name, isPublic: isPublic })
+            });
+
+            if (res.ok) {
+                // 1. Ẩn modal
+                bootstrap.Modal.getInstance(document.getElementById('createPlModal')).hide();
+                // 2. Reload sidebar ngay lập tức (không reload trang)
+                loadSidebarPlaylists();
+                // 3. Reset form (optional)
+                document.getElementById('newPlName').value = '';
+            } else {
+                alert("Lỗi khi tạo playlist");
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // --- 2. TAB NAVIGATION LOGIC (FOR YOU / LIKED / HISTORY) ---
+
+    function switchView(viewName) {
+        // Ẩn tất cả view
+        document.querySelectorAll('.content-view').forEach(el => el.classList.add('d-none'));
+        // Bỏ active tab cũ
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-tab', 'text-white'));
+
+        // Hiện view mới
+        document.getElementById(`view-${viewName}`).classList.remove('d-none');
+        // Active tab mới
+        const link = document.getElementById(`link-${viewName}`);
+        if(link) link.classList.add('active-tab', 'text-white');
+
+        // Cập nhật tiêu đề trang
+        const titles = {'foryou': 'Dành cho bạn', 'liked': 'Bài hát yêu thích', 'history': 'Lịch sử nghe'};
+        document.getElementById('page-title').innerText = titles[viewName];
+
+        // Load dữ liệu tương ứng
+        if(viewName === 'foryou') loadForYouData();
+        if(viewName === 'liked') loadLikedSongs();
+        if(viewName === 'history') loadHistory();
+    }
+
+    // --- 3. DATA LOADING LOGIC ---
+
+    // --- LOGIC: DÀNH CHO BẠN (FOR YOU) ---
+    async function loadForYouData() {
+        const containerMix = document.getElementById('foryou-mix-list');
+        // Chỉ load nếu chưa có dữ liệu (tránh load lại liên tục khi chuyển tab)
+        if(containerMix.children.length > 1) return;
+
+        try {
+            // Gọi API tổng hợp mới viết
+            const res = await fetch(`${API}/foryou/${USER_ID}`);
+            const data = await res.json();
+
+            // Render 3 section riêng biệt
+            renderCards(data.dailyMix, 'foryou-mix-list', false);
+            renderCards(data.trending, 'foryou-trend-list', true); // true = Có hiện badge top
+            renderCards(data.discovery, 'foryou-discovery-list', false);
+        } catch(e) { console.error(e); }
+    }
+
+    // Hàm render Card nâng cấp (Thêm tham số isRanking)
+    function renderCards(songs, containerId, isRanking) {
+        const div = document.getElementById(containerId);
+        div.innerHTML = '';
+
+        if(!songs || songs.length === 0) {
+            div.innerHTML = '<div class="text-white-50 ms-2">Chưa có dữ liệu...</div>';
+            return;
+        }
+
+        songs.forEach((s, index) => {
+            const img = s.coverImage && s.coverImage.startsWith('http') ? s.coverImage : `https://placehold.co/300?text=${s.title.charAt(0)}`;
+
+            // Xử lý Badge Top 1, 2, 3 cho phần Trending
+            let badgeHtml = '';
+            if (isRanking) {
+                let rankColor = 'bg-secondary';
+                if(index === 0) rankColor = 'bg-danger';       // Top 1 Đỏ
+                else if(index === 1) rankColor = 'bg-success'; // Top 2 Xanh lá
+                else if(index === 2) rankColor = 'bg-info';    // Top 3 Xanh dương
+
+                badgeHtml = `<span class="position-absolute top-0 start-0 m-2 badge ${rankColor} shadow" style="z-index: 5;">#${index + 1}</span>`;
+            }
+
+            // Xử lý Badge AI cho phần Daily Mix (Optional)
+            if (containerId === 'foryou-mix-list' && index < 2) {
+                badgeHtml = `<span class="position-absolute top-0 end-0 m-2 badge bg-primary shadow" style="z-index: 5; font-size: 0.6rem">AI PICK</span>`;
+            }
+
+            div.innerHTML += `
+                <div class="col">
+                    <div class="custom-card h-100" onclick="window.location.href='/song/${s.songId}'">
+                        ${badgeHtml}
+                        <div style="position: relative;">
+                            <img src="${img}" alt="${s.title}" loading="lazy" class="w-100 rounded shadow-sm mb-3">
+                            <div class="play-btn-hover"><i class="bi bi-play-fill"></i></div>
+                        </div>
+                        <h6 class="text-white text-truncate mb-1 fw-bold" title="${s.title}">${s.title}</h6>
+                        <div class="text-white-50 small text-truncate">${s.artist ? s.artist.name : 'Unknown'}</div>
+                        ${isRanking ? `<div class="mt-2 small text-white-50"><i class="bi bi-graph-up-arrow me-1 text-success"></i> Trending</div>` : ''}
+                    </div>
+                </div>`;
+        });
+    }
+
+    async function loadHistory() {
+        try {
+            const res = await fetch(`${API}/history/user/${USER_ID}`);
+            const data = await res.json();
+            const tbody = document.getElementById('history-body');
+            tbody.innerHTML = '';
+            data.forEach((h, idx) => {
+                tbody.innerHTML += `
+                <tr role="button" onclick="window.location.href='/song/${h.song.songId}'">
+                    <td class="text-white-50">${idx + 1}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="${h.song.coverImage || 'https://placehold.co/40'}" width="40" height="40" class="rounded me-3 object-fit-cover">
+                            <div class="fw-bold text-white">${h.song.title}</div>
+                        </div>
+                    </td>
+                    <td class="text-white-50">${h.song.artist ? h.song.artist.name : 'Unknown'}</td>
+                    <td class="text-white-50 small">${new Date(h.listenedAt).toLocaleDateString()}</td>
+                </tr>`;
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadLikedSongs() {
+        // TODO: Chờ API Favorites chuẩn. Hiện tại dùng tạm UI giả lập hoặc gọi API list song.
+        document.getElementById('liked-songs-grid').innerHTML = '<div class="text-white-50 ms-2">Đang cập nhật API Favorites...</div>';
+    }
+
+    // --- INIT ---
+    loadSidebarPlaylists(); // Load Sidebar ngay khi vào trang
+
+    // Check URL param ?tab=...
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab') || 'foryou';
+    switchView(tab);
+
+</script>
+</body>
+</html>

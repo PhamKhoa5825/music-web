@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Xử lý báo cáo - MusicPro Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        /* --- STYLE ĐỒNG BỘ VỚI DASHBOARD --- */
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+
+        /* Sidebar */
+        .sidebar { min-height: 100vh; background: #212529; color: white; }
+        .sidebar a { color: #adb5bd; padding: 12px 20px; text-decoration: none; display: block; border-left: 3px solid transparent; transition: 0.2s; }
+        .sidebar a:hover, .sidebar a.active { background: #1a1e21; color: #00e5ff; border-left-color: #00e5ff; }
+
+        /* Elements */
+        .card-stat { border: none; border-radius: 8px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 20px; }
+        .filter-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .big-number { font-size: 2.5rem; font-weight: bold; }
+
+        /* Table */
+        .table thead th { background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; color: #6c757d; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
+        .table tbody td { vertical-align: middle; border-bottom: 1px solid #eee; }
+
+        /* Badges */
+        .badge-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .badge-resolved { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .badge-dismissed { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    <div class="sidebar d-flex flex-column flex-shrink-0 p-3" style="width: 260px;">
+        <h4 class="text-center fw-bold mb-4 text-white"><i class="bi bi-soundwave me-2"></i>ADMIN</h4>
+        <a href="/admin/dashboard"><i class="bi bi-bar-chart-fill me-2"></i>Thống Kê</a>
+        <a href="/admin/reports" class="active"><i class="bi bi-flag-fill me-2"></i>Báo Cáo <span class="badge bg-danger ms-1" th:text="${pendingReports}">0</span></a>
+        <a href="/admin/songs"><i class="bi bi-music-note-list me-2"></i>Kho Nhạc</a>
+        <a href="/home" class="mt-auto border-top border-secondary pt-3"><i class="bi bi-box-arrow-left me-2"></i>Về Trang Chủ</a>
+    </div>
+
+    <div class="flex-grow-1 p-4 bg-light">
+        <h3 class="mb-4 fw-bold text-dark">Quản Lý Báo Cáo Vi Phạm</h3>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card card-stat bg-warning text-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 fw-bold opacity-75">Chờ xử lý</h6>
+                            <span class="big-number" th:text="${statPending}">0</span>
+                        </div>
+                        <i class="bi bi-hourglass-split fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-info text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 fw-bold opacity-75">Hôm nay</h6>
+                            <span class="big-number" th:text="${statToday}">0</span>
+                        </div>
+                        <i class="bi bi-calendar-day fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-primary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 fw-bold opacity-75">Tháng này</h6>
+                            <span class="big-number" th:text="${statMonth}">0</span>
+                        </div>
+                        <i class="bi bi-calendar-month fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-success">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 fw-bold opacity-75">Tổng năm</h6>
+                            <span class="big-number" th:text="${statYear}">0</span>
+                        </div>
+                        <i class="bi bi-shield-check fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-section d-flex flex-wrap gap-3 align-items-end">
+            <div>
+                <label class="form-label small fw-bold text-muted">Trạng thái:</label>
+                <select id="filter-status" class="form-select">
+                    <option value="ALL" th:selected="${currentStatus == 'ALL'}">-- Tất cả --</option>
+                    <option value="PENDING" th:selected="${currentStatus == 'PENDING'}">Chờ xử lý</option>
+                    <option value="RESOLVED" th:selected="${currentStatus == 'RESOLVED'}">Đã giải quyết</option>
+                    <option value="DISMISSED" th:selected="${currentStatus == 'DISMISS'}">Đã bỏ qua</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small fw-bold text-muted">Sắp xếp:</label>
+                <select id="filter-sort" class="form-select">
+                    <option value="newest" th:selected="${currentSort == 'newest'}">Mới nhất trước</option>
+                    <option value="oldest" th:selected="${currentSort == 'oldest'}">Cũ nhất trước</option>
+                </select>
+            </div>
+            <div class="ms-auto">
+                <button class="btn btn-primary px-4" onclick="applyFilters()">
+                    <i class="bi bi-filter"></i> Lọc Dữ Liệu
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-section p-0 overflow-hidden">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th class="ps-4">Người báo cáo</th>
+                    <th>Đối tượng</th>
+                    <th>Lý do</th>
+                    <th>Thời gian</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end pe-4">Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="rpt : ${reports}">
+                    <td class="ps-4">
+                        <div class="fw-bold text-dark" th:text="${rpt.reporter.username}">User</div>
+                        <small class="text-muted" th:text="'ID: ' + ${rpt.reporter.userId}"></small>
+                    </td>
+                    <td>
+                        <div th:if="${rpt.song != null}">
+                            <span class="badge bg-secondary mb-1">SONG</span>
+                            <div class="fw-bold text-primary" th:text="${rpt.song.title}">Title</div>
+                        </div>
+                        <div th:if="${rpt.comment != null}">
+                            <span class="badge bg-info mb-1">COMMENT</span>
+                            <div class="text-muted fst-italic small" th:text="${#strings.abbreviate(rpt.comment.content, 40)}">Content...</div>
+                        </div>
+                    </td>
+                    <td class="text-danger fw-bold" th:text="${rpt.reason}">Spam</td>
+                    <td th:text="${#temporals.format(rpt.reportedAt, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td>
+                        <span th:if="${rpt.status.name() == 'PENDING'}" class="badge badge-pending px-3 py-2 rounded-pill">Chờ xử lý</span>
+                        <span th:if="${rpt.status.name() == 'RESOLVED'}" class="badge badge-resolved px-3 py-2 rounded-pill">Đã xử lý</span>
+                        <span th:if="${rpt.status.name() == 'DISMISSED'}" class="badge badge-dismissed px-3 py-2 rounded-pill">Đã bỏ qua</span>
+                    </td>
+
+                    <td class="text-end pe-4">
+                        <div th:if="${rpt.status.name() == 'PENDING'}">
+                            <button class="btn btn-outline-secondary btn-sm me-1" onclick="processReport(this, 'DISMISS')" title="Bỏ qua">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm me-1" onclick="processReport(this, 'WARN_USER')" title="Cảnh báo User">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="processReport(this, 'DELETE_CONTENT')" title="Xóa nội dung">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+
+                        <div th:unless="${rpt.status.name() == 'PENDING'}">
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        </div>
+
+                        <input type="hidden" class="report-id" th:value="${rpt.id}">
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(reports)}">
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        Không tìm thấy báo cáo nào.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script th:inline="none">
+    function applyFilters() {
+        const status = document.getElementById('filter-status').value;
+        const sort = document.getElementById('filter-sort').value;
+        window.location.href = `/admin/reports?status=${status}&sort=${sort}`;
+    }
+
+    async function processReport(btn, action) {
+        if(!confirm("Xác nhận thực hiện hành động này?")) return;
+
+        const row = btn.closest('tr');
+        const id = row.querySelector('.report-id').value;
+
+        try {
+            const res = await fetch(`/admin/reports/${id}/resolve?action=${action}`, { method: 'POST' });
+            if(res.ok) {
+                alert("Đã xử lý thành công!");
+                location.reload();
+            } else {
+                alert("Lỗi server");
+            }
+        } catch(e) { alert("Lỗi kết nối"); }
+    }
+</script>
+</body>
+</html>

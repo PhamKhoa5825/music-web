@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chỉnh sửa bài hát - MusicPro Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { min-height: 100vh; background: #212529; color: white; }
+        .sidebar a { color: #adb5bd; padding: 12px 20px; text-decoration: none; display: block; }
+        .sidebar a:hover { background: #1a1e21; color: #00e5ff; }
+        .form-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .preview-img { width: 100%; max-width: 200px; border-radius: 8px; border: 1px solid #ddd; padding: 5px; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    <div class="sidebar d-flex flex-column flex-shrink-0" style="width: 260px;">
+        <div class="p-3 text-center fw-bold border-bottom border-secondary">Music Admin</div>
+        <a href="/admin/songs"><i class="bi bi-arrow-left me-2"></i>Quay lại danh sách</a>
+    </div>
+
+    <div class="flex-grow-1 p-4">
+        <h3 class="mb-4 fw-bold text-dark">Chỉnh Sửa Chi Tiết Bài Hát</h3>
+
+        <form th:action="@{/admin/songs/update}" th:object="${song}" method="post">
+            <input type="hidden" th:field="*{songId}">
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-card mb-4">
+                        <h5 class="mb-3 text-primary border-bottom pb-2">Thông tin cơ bản</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên bài hát</label>
+                            <input type="text" class="form-control" th:field="*{title}" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Nghệ sĩ (Artist)</label>
+                                <select class="form-select" th:field="*{artist}">
+                                    <option th:each="a : ${listArtists}"
+                                            th:value="${a.artistId}"
+                                            th:text="${a.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Album</label>
+                                <select class="form-select" th:field="*{album}">
+                                    <option value="">-- Không có Album --</option>
+                                    <option th:each="al : ${listAlbums}"
+                                            th:value="${al.id}"
+                                            th:text="${al.title}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Thể loại (Genres)</label>
+                            <div class="card p-3 bg-light">
+                                <div class="row">
+                                    <div class="col-md-4" th:each="g : ${listGenres}">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                   th:field="*{genres}"
+                                                   th:value="${g.genreId}">
+                                            <label class="form-check-label" th:text="${g.name}"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <h5 class="mb-3 text-primary border-bottom pb-2">File & Trạng thái</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Đường dẫn File nhạc (MP3 URL)</label>
+                            <input type="text" class="form-control font-monospace" th:field="*{filePath}">
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" th:field="*{isHidden}">
+                            <label class="form-check-label fw-bold">Ẩn bài hát này khỏi trang chủ?</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-card text-center">
+                        <h6 class="fw-bold mb-3">Ảnh Bìa (Cover)</h6>
+                        <img th:src="*{coverImage}" id="preview" class="preview-img mb-3"
+                             onerror="this.src='https://placehold.co/200?text=No+Image'">
+
+                        <input type="text" class="form-control mb-3" th:field="*{coverImage}"
+                               id="coverInput" placeholder="Nhập URL ảnh..." oninput="updatePreview()">
+
+                        <hr>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary fw-bold py-2">
+                                <i class="bi bi-save me-2"></i>LƯU THAY ĐỔI
+                            </button>
+                            <a href="/admin/songs" class="btn btn-outline-secondary">Hủy bỏ</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function updatePreview() {
+        const url = document.getElementById('coverInput').value;
+        document.getElementById('preview').src = url;
+    }
+</script>
+</body>
+</html>

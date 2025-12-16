@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicPro - Cyberpunk Theme</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        /* --- THEME: CYBERPUNK (BLACK - CYAN - GREEN) --- */
+        :root {
+            --bg-body: #050505;       /* Đen sâu */
+            --bg-card: #0f0f0f;       /* Đen nhám */
+
+            --cyan-neon: #00f3ff;     /* Xanh Cyan điện */
+            --green-neon: #00ff9d;    /* Xanh lá Neon (Dùng cho Like/Active) */
+
+            --text-main: #ffffff;
+            --text-sub: #a0a0a0;
+
+            --border-color: #333;
+        }
+
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Segoe UI', sans-serif; }
+
+        /* Navbar với viền neon dưới */
+        .navbar {
+            background-color: #000 !important;
+            border-bottom: 1px solid #1a1a1a;
+            box-shadow: 0 4px 20px rgba(0, 243, 255, 0.1);
+        }
+        .navbar-brand {
+            font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+            background: -webkit-linear-gradient(45deg, var(--cyan-neon), var(--green-neon));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Sections */
+        .section-title {
+            color: var(--cyan-neon);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-left: 3px solid var(--green-neon);
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+
+        /* Song Card - Tech Style */
+        .song-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px; /* Góc vuông hơn cho nam tính */
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .song-card:hover {
+            border-color: var(--cyan-neon);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .card-img-top { height: 160px; object-fit: cover; opacity: 0.8; transition: 0.3s; }
+        .song-card:hover .card-img-top { opacity: 1; }
+
+        /* Nút Play: Gradient Cyan -> Green */
+        .play-overlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: linear-gradient(135deg, var(--cyan-neon), var(--green-neon));
+            border-radius: 50%; width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: 0.3s;
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.6);
+        }
+        .song-card:hover .play-overlay { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .play-overlay i { color: #000; font-size: 1.8rem; margin-left: 4px; }
+
+        /* Typography */
+        .song-title { color: #fff; font-weight: 600; font-size: 0.95rem; }
+        .song-card:hover .song-title { color: var(--cyan-neon); }
+        .artist-name { color: var(--text-sub); font-size: 0.8rem; }
+
+        /* Icons */
+        .action-btn { transition: 0.2s; font-size: 1.1rem; color: #666; }
+        .action-btn:hover { color: var(--text-main) !important; }
+
+        /* Trạng thái Active (Like sẽ màu xanh lá) */
+        .active-like { color: var(--green-neon) !important; text-shadow: 0 0 10px rgba(0, 255, 157, 0.5); }
+
+        /* Modals */
+        .modal-content { background-color: #111; border: 1px solid var(--cyan-neon); box-shadow: 0 0 20px rgba(0, 243, 255, 0.1); color: white; }
+        .modal-header { border-bottom: 1px solid #333; }
+        .form-control, .form-select {
+            background-color: #050505; border: 1px solid #333; color: var(--cyan-neon);
+        }
+        .form-control:focus {
+            background-color: #000; border-color: var(--green-neon); color: var(--green-neon); box-shadow: none;
+        }
+        .list-group-item { background-color: #1a1a1a; color: white; border-color: #333; }
+        .list-group-item:hover { background-color: #222; border-left: 3px solid var(--green-neon); }
+
+        /* Buttons */
+        .btn-cyber {
+            background: transparent; border: 1px solid var(--cyan-neon); color: var(--cyan-neon);
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+            transition: 0.3s;
+        }
+        .btn-cyber:hover { background: var(--cyan-neon); color: black; box-shadow: 0 0 15px var(--cyan-neon); }
+
+        .btn-danger-cyber {
+            background: transparent; border: 1px solid #ff0055; color: #ff0055;
+        }
+        .btn-danger-cyber:hover { background: #ff0055; color: white; box-shadow: 0 0 15px #ff0055; }
+
+        /* Badge */
+        .badge-hot { background-color: var(--green-neon); color: black; font-weight: 800; border-radius: 0; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top p-3">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="bi bi-cpu-fill me-2"></i>MusicPro</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto ps-4">
+                <li class="nav-item"><a class="nav-link text-white" href="/home">KHÁM PHÁ</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="/my-music">THƯ VIỆN</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="/ranking">BXH</a></li>
+                <li class="nav-item" id="admin-link-li" style="display: none;">
+                    <a class="nav-link fw-bold" style="color: var(--green-neon)" href="/admin/dashboard">
+                        <i class="bi bi-terminal-fill"></i> ADMIN
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex text-white align-items-center">
+                <span class="me-3 small text-secondary">USER ID: <b id="display-uid" style="color: var(--cyan-neon)">--</b></span>
+                <button class="btn btn-sm btn-outline-secondary rounded-0" onclick="changeUser()">ĐỔI</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid py-4" style="background: linear-gradient(180deg, #0a1111 0%, #050505 100%);">
+    <div class="container">
+        <h4 class="section-title">Gợi ý AI <span style="font-size: 0.6em; color: #666">/// SYSTEM_RECOMMEND</span></h4>
+        <div id="loading-rec" class="text-center py-3"><div class="spinner-border" style="color: var(--green-neon)"></div></div>
+        <div class="row g-4" id="recommend-list"></div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <h4 class="section-title">Kho Dữ Liệu <span style="font-size: 0.6em; color: #666">/// DATABASE_ALL</span></h4>
+    <div class="row g-4" id="all-songs-list"></div>
+</div>
+
+<div class="modal fade" id="playlistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color: var(--cyan-neon)">ADD TO PLAYLIST</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalSongId">
+                <div id="playlist-opts" class="list-group list-group-flush"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="commentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><span id="cmt-song-title" class="fw-bold text-info">Song Title</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="cmt-song-id">
+
+                <div class="card bg-dark border-secondary mb-3">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-white">Đánh giá của bạn:</strong>
+                            <div class="mt-1" id="star-rating-area">
+                                <i class="bi bi-star text-secondary fs-4 cursor-pointer" onclick="setRating(1)"></i>
+                                <i class="bi bi-star text-secondary fs-4 cursor-pointer" onclick="setRating(2)"></i>
+                                <i class="bi bi-star text-secondary fs-4 cursor-pointer" onclick="setRating(3)"></i>
+                                <i class="bi bi-star text-secondary fs-4 cursor-pointer" onclick="setRating(4)"></i>
+                                <i class="bi bi-star text-secondary fs-4 cursor-pointer" onclick="setRating(5)"></i>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-info" onclick="submitRating()">Gửi Đánh Giá</button>
+                    </div>
+                </div>
+
+                <h6 class="text-muted small border-bottom border-secondary pb-2">BÌNH LUẬN</h6>
+                <div id="comment-list-area" style="max-height: 300px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentRating = 0;
+
+    function setRating(star) {
+        currentRating = star;
+        const stars = document.querySelectorAll('#star-rating-area i');
+        stars.forEach((s, index) => {
+            if (index < star) {
+                s.classList.remove('bi-star', 'text-secondary');
+                s.classList.add('bi-star-fill', 'text-warning');
+            } else {
+                s.classList.remove('bi-star-fill', 'text-warning');
+                s.classList.add('bi-star', 'text-secondary');
+            }
+        });
+    }
+
+    async function submitRating() {
+        if(currentRating === 0) return alert("Vui lòng chọn số sao!");
+        const sid = document.getElementById('cmt-song-id').value;
+
+        // Gọi API RateSong đã viết ở InteractionController
+        const res = await fetch(`${API_BASE}/ratings`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                userId: USER_ID,
+                songId: sid,
+                rating: currentRating,
+                review: "User rated " + currentRating + " stars" // Có thể mở rộng input review sau
+            })
+        });
+
+        if(res.ok) {
+            alert("Đã gửi đánh giá thành công!");
+            // Reset sao
+            setRating(0);
+        }
+    }
+</script>
+
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-color: #ff0055">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color: #ff0055"><i class="bi bi-shield-exclamation me-2"></i>BÁO CÁO VI PHẠM</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Mục tiêu: <strong id="report-target-name" class="text-white">...</strong></p>
+                <input type="hidden" id="report-target-id"><input type="hidden" id="report-type">
+                <select id="report-reason" class="form-select mb-3">
+                    <option value="Spam">Spam / Rác</option>
+                    <option value="Ngôn từ đả kích">Ngôn từ đả kích</option>
+                    <option value="Bản quyền">Bản quyền</option>
+                </select>
+                <div class="d-grid"><button class="btn btn-danger-cyber" onclick="submitReport()">XÁC NHẬN BÁO CÁO</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="msgToast" class="toast align-items-center text-white bg-black border border-success" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-text" style="color: var(--green-neon)">Success</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="none">
+    let USER_ID = localStorage.getItem('music_user_id') || 1;
+    document.getElementById('display-uid').innerText = USER_ID;
+    const API_BASE = "/api";
+
+    // ADMIN CHECK
+    async function checkAdminRole() {
+        try {
+            const res = await fetch(`${API_BASE}/users/${USER_ID}`);
+            if (res.ok) {
+                const user = await res.json();
+                document.getElementById('admin-link-li').style.display = (user.role === 'ADMIN') ? 'block' : 'none';
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // LOAD DATA
+    async function loadDashboard() {
+        try {
+            const res = await fetch(`${API_BASE}/dashboard/${USER_ID}`);
+            const data = await res.json();
+            document.getElementById('loading-rec').style.display = 'none';
+            renderSongs(data.recommendedSongs, 'recommend-list', true);
+            renderSongs(data.allSongs, 'all-songs-list', false);
+        } catch (e) { console.error(e); }
+    }
+
+    function renderSongs(songs, containerId, isRecommend) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        if(!songs || songs.length === 0) return;
+
+        songs.forEach(s => {
+            // Xử lý ảnh default nếu null
+            let img = s.coverImage && s.coverImage.startsWith('http') ? s.coverImage : `https://placehold.co/300x300/0f0f0f/00f3ff?text=${s.title.charAt(0)}`;
+
+            // Badge AI Pick
+            let badge = isRecommend ? '<span class="badge badge-hot position-absolute top-0 start-0 m-2 shadow" style="z-index:5">AI PICK</span>' : '';
+
+            container.innerHTML += `
+                <div class="col-6 col-md-3 col-lg-2">
+                    <div class="card song-card h-100">
+                        ${badge}
+
+                        <div style="position: relative;">
+                            <a href="/song/${s.songId}">
+                                <img src="${img}" class="card-img-top" alt="${s.title}">
+                            </a>
+
+                            <div class="play-overlay" onclick="window.location.href='/song/${s.songId}'">
+                                <i class="bi bi-play-fill"></i>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-2 d-flex flex-column">
+                            <div class="mb-2">
+                                <a href="/song/${s.songId}" class="text-decoration-none text-white">
+                                    <h6 class="song-title text-truncate" title="${s.title}">${s.title}</h6>
+                                </a>
+                                <p class="artist-name text-truncate">${s.artist ? s.artist.name : 'Unknown'}</p>
+                            </div>
+
+                            <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-25">
+                                <i class="bi bi-heart-fill action-btn" onclick="toggleLike(this, ${s.songId})" title="Like"></i>
+
+                                <a href="/song/${s.songId}" class="text-decoration-none">
+                                    <i class="bi bi-chat-left-dots-fill action-btn" title="Bình luận"></i>
+                                </a>
+
+                                <i class="bi bi-plus-square-fill action-btn" onclick="openPlaylistModal(${s.songId})" title="Playlist"></i>
+
+                                <i class="bi bi-flag-fill action-btn" onclick="openReportModal(${s.songId}, 'SONG', '${s.title}')" title="Report"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // ACTIONS
+    async function playSong(sid, title) {
+        await fetch(`${API_BASE}/history?userId=${USER_ID}&songId=${sid}`, {method: 'POST'});
+        showToast(`EXECUTING: ${title}`);
+    }
+
+    async function toggleLike(el, sid) {
+        const res = await fetch(`${API_BASE}/favorites/toggle?userId=${USER_ID}&songId=${sid}`, {method: 'POST'});
+        const txt = await res.text();
+        if(txt.includes('Liked')) {
+            el.classList.add('active-like'); // Xanh lá neon
+            showToast('LIKED // SAVED TO DATABASE');
+        } else {
+            el.classList.remove('active-like');
+        }
+    }
+
+    async function openPlaylistModal(sid) {
+        const modal = new bootstrap.Modal(document.getElementById('playlistModal'));
+        document.getElementById('modalSongId').value = sid;
+        const res = await fetch(`${API_BASE}/playlists/user/${USER_ID}`);
+        const playlists = await res.json();
+        const div = document.getElementById('playlist-opts');
+        div.innerHTML = '';
+        playlists.forEach(p => {
+            div.innerHTML += `<button class="list-group-item list-group-item-action" onclick="addToPlaylist(${p.playlistId}, ${sid})">${p.name}</button>`;
+        });
+        modal.show();
+    }
+
+    async function addToPlaylist(pid, sid) {
+        await fetch(`${API_BASE}/playlists/${pid}/songs`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({songId: sid})
+        });
+        showToast('ADDED TO PLAYLIST');
+        bootstrap.Modal.getInstance(document.getElementById('playlistModal')).hide();
+    }
+
+    async function openCommentModal(sid, title) {
+        document.getElementById('cmt-song-title').innerText = title;
+        document.getElementById('cmt-song-id').value = sid;
+        await loadComments(sid);
+        new bootstrap.Modal(document.getElementById('commentModal')).show();
+    }
+
+    async function loadComments(sid) {
+        const container = document.getElementById('comment-list-area');
+        container.innerHTML = 'Loading...';
+        const res = await fetch(`${API_BASE}/comments/song/${sid}`);
+        const comments = await res.json();
+        container.innerHTML = '';
+        if(comments.length === 0) { container.innerHTML = '<div class="text-secondary text-center py-3">NO DATA FOUND</div>'; return; }
+
+        comments.forEach(c => {
+            container.innerHTML += `
+                <div class="border-bottom border-secondary border-opacity-25 py-2">
+                    <div class="d-flex justify-content-between">
+                        <strong style="color: var(--cyan-neon)">${c.user ? c.user.username : 'User'}</strong>
+                        <i class="bi bi-flag-fill text-secondary action-btn" style="font-size:0.8rem" onclick="openReportModal(${c.id}, 'COMMENT', 'Comment của ${c.user.username}')"></i>
+                    </div>
+                    <p class="mb-1 text-light small">${c.content}</p>
+                    <div class="small text-muted">
+                        <span class="me-3 cursor-pointer" onclick="reactComment(${c.id}, true, ${sid})"><i class="bi bi-hand-thumbs-up-fill"></i> ${c.likeCount}</span>
+                        <span class="cursor-pointer" onclick="reactComment(${c.id}, false, ${sid})"><i class="bi bi-hand-thumbs-down-fill"></i> ${c.dislikeCount}</span>
+                    </div>
+                </div>`;
+        });
+    }
+
+    async function postComment() {
+        const content = document.getElementById('new-comment-content').value;
+        const sid = document.getElementById('cmt-song-id').value;
+        if(!content) return;
+        await fetch(`${API_BASE}/comments/add`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({userId: USER_ID, songId: sid, content: content})
+        });
+        document.getElementById('new-comment-content').value = '';
+        loadComments(sid);
+    }
+
+    async function reactComment(cid, isLike, sid) {
+        await fetch(`${API_BASE}/comments/react?userId=${USER_ID}&commentId=${cid}&isLike=${isLike}`, {method: 'POST'});
+        loadComments(sid);
+    }
+
+    function openReportModal(targetId, type, name) {
+        document.getElementById('report-target-id').value = targetId;
+        document.getElementById('report-type').value = type;
+        document.getElementById('report-target-name').innerText = name;
+        new bootstrap.Modal(document.getElementById('reportModal')).show();
+    }
+
+    async function submitReport() {
+        const targetId = document.getElementById('report-target-id').value;
+        const type = document.getElementById('report-type').value;
+        const reason = document.getElementById('report-reason').value;
+        await fetch(`${API_BASE}/reports/create`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({reporterId: USER_ID, targetId: targetId, type: type, reason: reason})
+        });
+        showToast('REPORT SENT');
+        bootstrap.Modal.getInstance(document.getElementById('reportModal')).hide();
+    }
+
+    function showToast(msg) {
+        document.getElementById('toast-text').innerText = msg;
+        new bootstrap.Toast(document.getElementById('msgToast')).show();
+    }
+
+    function changeUser() {
+        let u = prompt("USER ID:", USER_ID);
+        if(u) { localStorage.setItem('music_user_id', u); location.reload(); }
+    }
+
+    checkAdminRole();
+    loadDashboard();
+</script>
+</body>
+</html>
