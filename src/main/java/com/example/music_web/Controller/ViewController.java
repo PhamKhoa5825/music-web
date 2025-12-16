@@ -1,5 +1,8 @@
 package com.example.music_web.Controller;
 
+import com.example.music_web.Entity.Playlist;
+import com.example.music_web.Repository.PlaylistRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,6 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class ViewController {
+    @Autowired
+    private PlaylistRepository playlistRepository;
 
     @GetMapping("/home")
     public String home() {

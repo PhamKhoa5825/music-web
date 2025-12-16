@@ -52,4 +52,17 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             "AND " +
             "(:date IS NULL OR CAST(s.uploadDate AS LocalDate) = :date)")
     List<Song> searchVisibleSongs(@Param("keyword") String keyword, @Param("date") LocalDate date);
+
+
+    // --- CẬP NHẬT MỚI: TÌM KIẾM ĐA NĂNG ---
+    // Sử dụng @Query để join bảng Artist và Album
+    // LOWER() để tìm kiếm không phân biệt hoa thường
+    @Query("SELECT s FROM Song s " +
+            "LEFT JOIN s.artist a " +
+            "LEFT JOIN s.album al " +
+            "WHERE (LOWER(s.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(a.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(al.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND s.isHidden = false")
+    List<Song> searchComplex(@Param("keyword") String keyword);
 }

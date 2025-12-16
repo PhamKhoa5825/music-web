@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="tab-foryou" id="view-foryou" class="content-view">
+    <div class="mb-5">
+        <h3 class="fw-bold mb-3">Daily Mix <span class="fs-6 text-white-50 fw-normal ms-2">Tuyển tập riêng</span></h3>
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="foryou-mix-list">
+            <div class="col"><div class="spinner-border text-success"></div></div>
+        </div>
+    </div>
+
+    <div class="mb-5">
+        <h3 class="fw-bold mb-3">Xu hướng <span class="fs-6 text-white-50 fw-normal ms-2">Top thịnh hành</span></h3>
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="foryou-trend-list"></div>
+    </div>
+
+    <div class="mb-5">
+        <h3 class="fw-bold mb-3">Khám phá <span class="fs-6 text-white-50 fw-normal ms-2">Có thể bạn chưa nghe</span></h3>
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="foryou-discovery-list"></div>
+    </div>
+</div>
+
+<div th:fragment="tab-liked" id="view-liked" class="content-view d-none">
+    <div class="d-flex align-items-end gap-3 mb-4 p-4 rounded" style="background: linear-gradient(135deg, #450af5, #8e2de2);">
+        <i class="bi bi-heart-fill display-1 text-white shadow"></i>
+        <div>
+            <span class="text-white small fw-bold">PLAYLIST</span>
+            <h1 class="display-4 fw-bold text-white mb-0">Bài Hát Đã Thích</h1>
+            <div class="text-white-50 mt-2" id="liked-count-text">Đang tải...</div>
+        </div>
+    </div>
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="liked-songs-grid"></div>
+</div>
+
+<div th:fragment="tab-history" id="view-history" class="content-view d-none">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <i class="bi bi-play-circle-fill text-info fs-1"></i>
+        <h3 class="fw-bold mb-0">Bài hát đã phát</h3>
+        <span class="text-white-50 ms-2" style="font-size: 0.9rem" id="history-count">(0)</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-hover bg-transparent align-middle">
+            <thead class="text-secondary small border-bottom border-secondary">
+            <tr>
+                <th style="width: 50px">#</th>
+                <th>TIÊU ĐỀ</th>
+                <th>NGHỆ SĨ</th>
+                <th class="text-end" style="width: 100px"><i class="bi bi-clock"></i></th>
+                <th style="width: 50px"></th> </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<div th:fragment="tab-playlists" id="view-playlists" class="content-view d-none">
+    <div class="d-flex align-items-end justify-content-between mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">Playlist của bạn</h3>
+            <span class="text-white-50 small" id="playlist-total-count">0 tuyển tập</span>
+        </div>
+        <button class="btn btn-outline-light rounded-pill px-4 fw-bold" id="btn-create-playlist-tab">
+            <i class="bi bi-plus-lg me-2"></i>Tạo mới
+        </button>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="user-playlists-grid">
+        <div class="text-white-50 ms-2">Đang tải dữ liệu...</div>
+    </div>
+</div>
+
+</body>
+</html>

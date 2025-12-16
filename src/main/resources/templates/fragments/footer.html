@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer th:fragment="footer" class="bg-black text-secondary pt-5 pb-4 mt-5 border-top border-secondary border-opacity-25" style="font-size: 0.9rem;">
+    <div class="container">
+        <div class="row g-4 mb-5">
+            <div class="col-6 col-md-2">
+                <h6 class="text-white fw-bold text-uppercase mb-3 small">Công ty</h6>
+                <ul class="list-unstyled d-flex flex-column gap-2">
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Giới thiệu</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Việc làm</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">For the Record</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <h6 class="text-white fw-bold text-uppercase mb-3 small">Cộng đồng</h6>
+                <ul class="list-unstyled d-flex flex-column gap-2">
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Dành cho các Nghệ sĩ</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Nhà phát triển</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Quảng cáo</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Nhà đầu tư</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Nhà cung cấp</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <h6 class="text-white fw-bold text-uppercase mb-3 small">Liên kết hữu ích</h6>
+                <ul class="list-unstyled d-flex flex-column gap-2">
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Hỗ trợ</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Ứng dụng Di động Miễn phí</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Phổ biến theo quốc gia</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Import your music</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <h6 class="text-white fw-bold text-uppercase mb-3 small">Các gói của MusicPro</h6>
+                <ul class="list-unstyled d-flex flex-column gap-2">
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Premium Individual</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">Premium Student</a></li>
+                    <li><a href="#" class="text-decoration-none text-secondary hover-white">MusicPro Free</a></li>
+                </ul>
+            </div>
+
+            <div class="col-12 col-md-4 text-md-end">
+                <div class="d-flex gap-3 justify-content-md-end justify-content-start">
+                    <a href="#" class="social-btn"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="social-btn"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="social-btn"><i class="bi bi-facebook"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-secondary opacity-25">
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pt-3 small">
+            <div class="d-flex gap-3 mb-2 mb-md-0 flex-wrap justify-content-center">
+                <a href="#" class="text-decoration-none text-secondary hover-white">Pháp lý</a>
+                <a href="#" class="text-decoration-none text-secondary hover-white">Trung tâm an toàn và quyền riêng tư</a>
+                <a href="#" class="text-decoration-none text-secondary hover-white">Chính sách quyền riêng tư</a>
+                <a href="#" class="text-decoration-none text-secondary hover-white">Cookie</a>
+                <a href="#" class="text-decoration-none text-secondary hover-white">Giới thiệu Quảng cáo</a>
+            </div>
+            <div class="text-secondary">© 2025 MusicPro AB</div>
+        </div>
+    </div>
+
+    <style>
+        .hover-white:hover { color: white !important; text-decoration: underline !important; }
+        .social-btn {
+            width: 40px; height: 40px; background: #2a2a2a; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; color: white; transition: 0.3s;
+        }
+        .social-btn:hover { background: #727272; }
+    </style>
+</footer>
+</body>
+</html>

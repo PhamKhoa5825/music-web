@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -20,25 +22,37 @@ public class DashboardController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<DashboardData> getDashboardData(@PathVariable Long userId) {
-        // 1. Lấy danh sách gợi ý
+        // 1. Lấy tất cả bài hát khả dụng
+        List<Song> allSongs = songRepository.findByIsHiddenFalse();
+
+        // 2. Logic phân loại
+        // A. Gợi ý (Logic AI/Random cũ)
         List<Song> recommended = recommendationService.getRecommendationsForUser(userId);
 
-        // 2. Lấy danh sách bài hát cho Dashboard
-        // ❌ CŨ: List<Song> allSongs = songRepository.findAll();
-        // ✅ MỚI: Chỉ lấy bài chưa ẩn
-        List<Song> allSongs = songRepository.findByIsHiddenFalse();
+        // B. Mới phát hành: Sắp xếp theo ID giảm dần (hoặc ngày tạo) -> Lấy 10 bài
+        List<Song> newReleases = allSongs.stream()
+                .sorted(Comparator.comparing(Song::getSongId).reversed())
+                .limit(10)
+                .collect(Collectors.toList());
+
+        // C. Thịnh hành: Sắp xếp theo Views giảm dần -> Lấy 10 bài
+        List<Song> trending = allSongs.stream()
+                .sorted(Comparator.comparingInt(Song::getViews).reversed())
+                .limit(10)
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(DashboardData.builder()
                 .recommendedSongs(recommended)
-                .allSongs(allSongs)
+                .newReleases(newReleases)
+                .trendingSongs(trending)
                 .build());
     }
 
-    // DTO trả về cho Dashboard
     @Data
     @Builder
     public static class DashboardData {
         private List<Song> recommendedSongs;
-        private List<Song> allSongs;
+        private List<Song> newReleases;
+        private List<Song> trendingSongs;
     }
 }

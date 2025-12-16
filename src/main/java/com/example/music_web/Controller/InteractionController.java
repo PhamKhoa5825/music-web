@@ -121,4 +121,22 @@ public class InteractionController {
 
         return ResponseEntity.ok(response);
     }
+
+    // 1. API Lấy danh sách bài hát đã thích
+    @GetMapping("/favorites/user/{userId}")
+    public ResponseEntity<List<Song>> getUserFavorites(@PathVariable Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        List<Favorite> favorites = favoriteRepository.findByUser(user);
+        // Map từ Favorite Entity sang Song Entity
+        List<Song> songs = favorites.stream().map(Favorite::getSong).toList();
+        return ResponseEntity.ok(songs);
+    }
+
+    // 2. API Xóa 1 dòng lịch sử (Cho nút "Xóa" trong menu 3 chấm)
+    @DeleteMapping("/history/{historyId}")
+    public ResponseEntity<?> deleteHistoryItem(@PathVariable Long historyId) {
+        // Cần thêm logic check quyền owner nếu kĩ
+        interactionService.deleteHistoryById(historyId);
+        return ResponseEntity.ok().build();
+    }
 }

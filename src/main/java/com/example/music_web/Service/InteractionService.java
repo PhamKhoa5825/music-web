@@ -169,4 +169,16 @@ public class InteractionService {
         Playlist p = Playlist.builder().user(user).name(name).build();
         return playlistRepo.save(p);
     }
+
+    @Transactional // Quan trọng: Để đảm bảo việc xóa diễn ra an toàn trong DB
+    public void deleteHistoryById(Long historyId) {
+        // 1. Kiểm tra xem dòng lịch sử này có tồn tại không
+        if (historyRepo.existsById(historyId)) {
+            // 2. Thực hiện xóa theo ID (Dùng hàm có sẵn của JPA)
+            historyRepo.deleteById(historyId);
+        } else {
+            // (Tuỳ chọn) Ném lỗi hoặc log ra console nếu ID không tồn tại
+            System.out.println("History ID " + historyId + " không tồn tại, bỏ qua.");
+        }
+    }
 }
