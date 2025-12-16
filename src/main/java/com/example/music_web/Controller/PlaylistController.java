@@ -26,6 +26,14 @@ public class PlaylistController {
     @Autowired private SongRepository songRepository;
     @Autowired private IStorageService storageService;
 
+
+    @GetMapping("/{playlistId}")
+    public ResponseEntity<Playlist> getPlaylistDetail(@PathVariable Long playlistId) {
+        // Lưu ý: Đảm bảo Playlist Entity không bị vòng lặp vô tận (Infinite Recursion) khi serialize JSON
+        // Nếu bị lỗi StackOverflow, hãy dùng DTO hoặc @JsonIgnore ở Entity
+        return ResponseEntity.ok(playlistService.getPlaylistById(playlistId));
+    }
+
     @PostMapping
     public ResponseEntity<Playlist> createPlaylist(@RequestBody PlaylistRequest request) {
         return ResponseEntity.ok(playlistService.createPlaylist(request));

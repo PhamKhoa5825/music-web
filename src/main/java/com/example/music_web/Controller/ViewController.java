@@ -1,37 +1,21 @@
 package com.example.music_web.Controller;
 
-import com.example.music_web.Entity.Playlist;
-import com.example.music_web.Repository.PlaylistRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class ViewController {
-    @Autowired
-    private PlaylistRepository playlistRepository;
-
-    @GetMapping("/home")
-    public String home() {
-        return "index";
-    }
-
-    @GetMapping("/my-music")
-    public String library() {
+    // Mọi đường dẫn UI đều trả về 'my-music' (Shell)
+    // Spring Boot sẽ map file templates/my-music.html
+    @GetMapping({
+            "/",
+            "/home",
+            "/ranking",
+            "/my-music",
+            "/playlist/**",  // Quan trọng: Bắt tất cả playlist/1, playlist/2...
+            "/song/**"       // Nếu sau này làm chi tiết bài hát
+    })
+    public String spaIndex() {
         return "my-music";
-    }
-
-    @GetMapping("/ranking")
-    public String ranking() {
-        return "ranking";
-    }
-
-    @GetMapping("/song/{id}")
-    public String songDetail(@PathVariable Long id, Model model) {
-        // Truyền ID bài hát sang view để JS sử dụng fetch dữ liệu
-        model.addAttribute("songId", id);
-        return "song-detail"; // Trả về file song-detail.html
     }
 }

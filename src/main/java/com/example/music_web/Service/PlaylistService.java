@@ -16,6 +16,11 @@ public class PlaylistService {
     @Autowired private UserRepository userRepository;
     @Autowired private SongRepository songRepository;
 
+    public Playlist getPlaylistById(Long playlistId) {
+        return playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new RuntimeException("Playlist not found with id " + playlistId));
+    }
+
     // 1. Tạo Playlist
     public Playlist createPlaylist(PlaylistRequest request) {
         User user = userRepository.findById(request.getUserId())
