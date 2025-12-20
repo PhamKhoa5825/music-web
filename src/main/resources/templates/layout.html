@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'Music App'">Music App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #050505;
+
+            /* 2. Tạo các đốm sáng bằng radial-gradient */
+            background-image:
+                /* Đốm sáng chính (màu Teal của bạn) ở góc trên bên trái */
+                    radial-gradient(at 0% 0%, rgba(1, 109, 110, 0.3) 0px, transparent 50%),
+
+                        /* Đốm sáng phụ (màu tối hơn hoặc màu khác để tạo độ sâu) ở góc dưới phải */
+                    radial-gradient(at 100% 0%, rgba(1, 60, 60, 0.5) 0px, transparent 50%),
+
+                        /* Một chút ánh sáng nhẹ ở giữa để không bị tối om */
+                    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.02) 0px, transparent 50%);
+
+            /* 3. Cố định background để khi cuộn trang nó không bị trượt */
+            background-attachment: fixed;
+            background-size: 100% 100%;
+            padding-bottom: 120px;
+
+            min-height: 100vh;
+            color: white; /* Màu chữ mặc định */
+        }
+
+
+
+        .navbar {
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(224, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .navbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #E0FFFF;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-shadow: 0 2px 10px rgba(224, 255, 255, 0.3);
+        }
+
+        .navbar-brand:hover {
+            transform: translateY(-2px);
+            text-shadow: 0 4px 20px rgba(224, 255, 255, 0.5);
+        }
+
+        .navbar-brand i {
+            filter: drop-shadow(0 0 8px rgba(224, 255, 255, 0.6));
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 1rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .navbar-item a {
+            color: rgba(224, 255, 255, 0.7);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0.6rem 1.2rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .navbar-item a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(224, 255, 255, 0.1) 0%, rgba(224, 255, 255, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 12px;
+        }
+
+        .navbar-item a:hover {
+            color: #E0FFFF;
+            transform: translateY(-2px);
+            text-shadow: 0 0 10px rgba(224, 255, 255, 0.4);
+        }
+
+        .navbar-item a:hover::before {
+            opacity: 1;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* --- MUSIC PLAYER BAR CSS --- */
+        .music-player {
+            position: fixed;
+            bottom: 0;
+            left: 0px; /* Khớp với độ rộng sidebar */
+            right: 0;    /* Kéo dài hết sang phải */
+            height: 90px;
+            background-color: #181818;
+            border-top: 1px solid #282828;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 1000; /* Đảm bảo nổi lên trên các thành phần khác */
+        }
+
+        /* Phần thông tin bài hát */
+        .song-info {
+            display: flex;
+            align-items: center;
+            width: 30%; /* Chiếm 30% chiều rộng */
+        }
+        .player-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            margin-right: 1rem;
+            object-fit: cover;
+        }
+        .song-details .player-title {
+            color: #fff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 500;
+        }
+        .song-details .player-artist {
+            color: #b3b3b3;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        /* Phần nút điều khiển ở giữa */
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .control-btn {
+            background: none;
+            border: none;
+            color: #b3b3b3;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .control-btn:hover {
+            color: #fff;
+        }
+        .play-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff; /* Nút play tròn màu trắng */
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+        .play-btn:hover {
+            transform: scale(1.1);
+            color: #000;
+        }
+
+        .player-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: fadeInLeft 0.5s ease;
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .player-cover {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4),
+            0 0 20px rgba(224, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .player-cover:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5),
+            0 0 30px rgba(224, 255, 255, 0.2);
+        }
+
+        .player-details h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+            color: #E0FFFF;
+            font-weight: 500;
+            text-shadow: 0 2px 8px rgba(224, 255, 255, 0.2);
+        }
+
+        .player-details p {
+            font-size: 0.85rem;
+            color: rgba(224, 255, 255, 0.5);
+            font-weight: 300;
+        }
+
+        .controls-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .control-btn.play-pause {
+            background: linear-gradient(135deg, #E0FFFF 0%, #a0e0e0 100%);
+            color: #000;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(224, 255, 255, 0.3);
+        }
+
+        .control-btn.play-pause:hover {
+            background: linear-gradient(135deg, #ffffff 0%, #E0FFFF 100%);
+            box-shadow: 0 6px 25px rgba(224, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* QUAN TRỌNG: Giảm từ 100px xuống 15px */
+            width: 100%; /* Đảm bảo khung bao rộng hết cỡ */
+            padding: 0 10px;
+        }
+
+        .progress-time {
+            font-size: 15px;
+            color: #ccc;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 5px;
+            background-color: #555555; /* Màu xám sáng hơn chút để dễ nhìn */
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: visible; /* Để hiện chấm tròn */
+
+            /* Thêm min-width để đảm bảo nó không bao giờ biến mất */
+            min-width: 150px;
+        }
+
+
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-bar:hover {
+            height: 6px;
+            background: rgba(224, 255, 255, 0.15);
+        }
+
+
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #E0FFFF 0%, #a0e0e0 100%);
+
+            background-color: #00ffff;
+            border-radius: 3px;
+            position: relative;
+            /* transition: width 0.1s linear; -> Tạm bỏ transition khi debug để kéo mượt hơn */
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: -7px; /* Căn chỉnh lại cho cân (14px / 2) */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(224, 255, 255, 0.4);
+            z-index: 10;
+        }
+
+        .player-extras {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .volume-slider {
+            width: 100px;
+            height: 5px;
+            background: rgba(224, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .volume-slider:hover {
+            height: 6px;
+            background: rgba(224, 255, 255, 0.15);
+        }
+
+        .volume-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #E0FFFF 0%, #a0e0e0 100%);
+            border-radius: 10px;
+            width: 70%;
+            box-shadow: 0 0 10px rgba(224, 255, 255, 0.4);
+        }
+
+        .extra-btn {
+            background: none;
+            border: none;
+            color: rgba(224, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0.5rem;
+            border-radius: 50%;
+        }
+
+        .extra-btn:hover {
+            color: #E0FFFF;
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(224, 255, 255, 0.4));
+        }
+
+        .extra-btn.active {
+            color: #E0FFFF;
+            filter: drop-shadow(0 0 10px rgba(224, 255, 255, 0.6));
+        }
+
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(224, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+            0 0 40px rgba(224, 255, 255, 0.1);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header i {
+            font-size: 2.5rem;
+            color: #ffcc00;
+            filter: drop-shadow(0 0 15px rgba(255, 204, 0, 0.5));
+        }
+
+        .modal-header h3 {
+            color: #E0FFFF;
+            font-weight: 500;
+            font-size: 1.4rem;
+        }
+
+        .modal-body {
+            margin-bottom: 2rem;
+            color: rgba(224, 255, 255, 0.7);
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.85rem 1.8rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #E0FFFF 0%, #a0e0e0 100%);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(224, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ffffff 0%, #E0FFFF 100%);
+            box-shadow: 0 6px 25px rgba(224, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #ff5252 0%, #ff3838 100%);
+            box-shadow: 0 6px 25px rgba(255, 107, 107, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(224, 255, 255, 0.08);
+            color: #E0FFFF;
+            border: 1px solid rgba(224, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(224, 255, 255, 0.15);
+            border-color: rgba(224, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .control-btn.active {
+            color: #00ffff; /* Màu xanh sáng (Cyan) khi đang bật */
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6); /* Hiệu ứng phát sáng */
+        }
+        /* --- TOAST NOTIFICATION STYLES --- */
+        #toast-container {
+            position: fixed;
+            top: 80px; /* Cách top để không che Navbar */
+            right: 20px;
+            z-index: 10000; /* Luôn nổi lên trên cùng */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            min-width: 300px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background: rgba(18, 18, 18, 0.95); /* Nền xám đen đậm */
+            backdrop-filter: blur(10px); /* Hiệu ứng mờ giống player */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+            /* Animation: Trượt vào và Mờ dần */
+            animation: slideInRight 0.5s ease forwards, fadeOut 0.5s ease 3s forwards;
+
+            /* Font style */
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        /* Success: Xanh Neon */
+        .toast-success {
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1); /* Glow nhẹ */
+        }
+        .toast-success i {
+            font-size: 1.2rem;
+        }
+
+        /* Error: Đỏ Neon */
+        .toast-error {
+            border: 1px solid #ff3333;
+            color: #ff3333;
+            box-shadow: 0 0 15px rgba(255, 51, 51, 0.1); /* Glow nhẹ */
+        }
+        .toast-error i {
+            font-size: 1.2rem;
+        }
+
+        /* Keyframes */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); pointer-events: none; }
+        }
+    </style>
+    <th:block layout:fragment="extra-css"></th:block>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<input type="hidden" id="serverSuccessMsg" th:value="${successMessage}">
+<input type="hidden" id="serverErrorMsg" th:value="${errorMessage}">
+<nav class="navbar">
+    <div class="navbar-container">
+        <a class="navbar-brand"><i class="fas fa-music"></i> Music App</a>
+        <ul class="navbar-menu">
+            <li class="navbar-item"><a href="/songs">Songs</a></li>
+            <li class="navbar-item"><a href="/admin/manager">Admin</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="music-player" id="musicPlayer" style="display: flex;"> <audio id="audioPlayer"></audio>
+
+    <div class="player-container">
+        <div class="player-info">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                 alt=""
+                 class="player-cover player-img"
+                 id="playerCover">
+
+            <div class="player-details">
+                <h4 id="playerTitle" class="player-title">Select a song</h4>
+                <p id="playerArtist" class="player-artist">-</p>
+            </div>
+        </div>
+
+        <div class="player-controls">
+            <div class="controls-buttons">
+                <button class="control-btn" id="shuffleBtn"><i class="fas fa-random"></i></button>
+                <button class="control-btn" id="prevBtn"><i class="fas fa-step-backward"></i></button>
+
+                <button class="control-btn play-pause" id="playPauseBtn" onclick="togglePlay()">
+                    <i class="fas fa-play"></i>
+                </button>
+
+                <button class="control-btn" id="nextBtn"><i class="fas fa-step-forward"></i></button>
+                <button class="control-btn" id="repeatBtn"><i class="fas fa-redo"></i></button>
+            </div>
+
+            <div class="progress-container">
+                <span class="progress-time" id="currentTime">0:00</span>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <span class="progress-time" id="totalTime">0:00</span>
+            </div>
+        </div>
+
+        <div class="player-extras">
+            <div class="volume-control">
+                <i class="fas fa-volume-up" id="volumeIcon" style="cursor: pointer; width: 20px;"></i>
+
+                <div class="volume-slider" id="volumeSlider">
+                    <div class="volume-fill" id="volumeFill" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="content" class="main-content"></div>
+
+<script>
+    // 1. Lấy thẻ Audio và biến trạng thái
+    var audio = document.getElementById('audioPlayer');
+    var isPlaying = false;
+
+    // 2. LẮNG NGHE SỰ KIỆN TỰ ĐỘNG (Sửa lỗi của bạn tại đây)
+    // Hễ nhạc bắt đầu chạy -> Tự động đổi icon thành Pause
+    audio.onplay = function() {
+        isPlaying = true;
+        updateIcon(true);
+    };
+
+    // Hễ nhạc dừng -> Tự động đổi icon thành Play
+    audio.onpause = function() {
+        isPlaying = false;
+        updateIcon(false);
+    };
+
+    // Hễ nhạc hết -> Tự động đổi icon thành Play
+    audio.onended = function() {
+        isPlaying = false;
+        updateIcon(false);
+    };
+
+    // 3. Hàm bật/tắt nhạc khi bấm nút ở thanh player
+    function togglePlay() {
+        if (!audio.src || audio.src === "") return;
+
+        if (audio.paused) {
+            audio.play();
+            // Không cần gọi updateIcon(true) ở đây nữa vì audio.onplay sẽ tự lo
+        } else {
+            audio.pause();
+            // Không cần gọi updateIcon(false) ở đây nữa vì audio.onpause sẽ tự lo
+        }
+    }
+
+    // 4. Hàm cập nhật hình ảnh Icon
+    function updateIcon(playing) {
+        const icon = document.querySelector("#playPauseBtn i");
+        if(icon) {
+            if(playing) {
+                // Đang phát -> Hiện nút Pause (2 gạch)
+                icon.classList.remove('fa-play');
+                icon.classList.add('fa-pause');
+            } else {
+                // Đang dừng -> Hiện nút Play (tam giác)
+                icon.classList.remove('fa-pause');
+                icon.classList.add('fa-play');
+            }
+        }
+    }
+
+
+
+    // --- BỔ SUNG LOGIC THANH TIẾN TRÌNH ---
+
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalTimeEl = document.getElementById('totalTime');
+
+    // 1. Sự kiện khi trình duyệt tải được thông tin file nhạc (để lấy tổng thời lượng)
+    audio.addEventListener('loadedmetadata', function() {
+        if (audio.duration && !isNaN(audio.duration)) {
+            totalTimeEl.textContent = formatTime(audio.duration);
+        }
+    });
+
+    // 2. Sự kiện cập nhật liên tục khi nhạc đang chạy
+    audio.addEventListener('timeupdate', function() {
+        // Cập nhật thời gian hiện tại
+        if(audio.currentTime) {
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+        }
+
+        // Cập nhật thanh chạy (Progress Bar)
+        if (audio.duration) {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = percent + "%";
+        }
+    });
+
+    // 3. Sự kiện bấm vào thanh tiến trình để tua (Seek)
+    if (progressBar) {
+        progressBar.addEventListener('click', function(e) {
+            if (!audio.src) return; // Nếu chưa có bài hát thì không làm gì
+
+            const width = this.clientWidth; // Chiều rộng tổng của thanh
+            const clickX = e.offsetX; // Vị trí click
+            const duration = audio.duration; // Tổng thời lượng
+
+            if (duration) {
+                // Tính toán thời gian mới
+                audio.currentTime = (clickX / width) * duration;
+            }
+        });
+    }
+
+    // 4. Hàm định dạng giây sang phút:giây (Ví dụ: 125s -> 02:05)
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return "0:00";
+
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    // --- LOGIC THANH TIẾN TRÌNH (CÓ KÉO THẢ) ---
+
+    var isDragging = false; // Biến kiểm tra xem có đang giữ chuột không
+
+    // 1. Cập nhật thanh chạy khi nhạc đang phát (Chỉ cập nhật khi KHÔNG kéo)
+    audio.addEventListener('timeupdate', function() {
+        if (!isDragging) { // Nếu đang kéo thì không để nhạc tự cập nhật giao diện, tránh giật
+            if(audio.currentTime) {
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+            }
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = percent + "%";
+            }
+        }
+    });
+
+    // 2. Xử lý sự kiện KÉO THẢ (Drag)
+    if (progressBar) {
+
+        // Khi bấm chuột xuống thanh tiến trình
+        progressBar.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            updateProgress(e); // Cập nhật ngay vị trí click
+        });
+
+        // Khi di chuyển chuột (trong lúc đang giữ chuột)
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                updateProgress(e);
+            }
+        });
+
+        // Khi thả chuột ra
+        document.addEventListener('mouseup', function(e) {
+            if (isDragging) {
+                isDragging = false;
+                // Lúc thả tay ra mới chính thức tua nhạc đến vị trí đó
+                const width = progressBar.clientWidth;
+                const clickX = e.clientX - progressBar.getBoundingClientRect().left;
+                const duration = audio.duration;
+
+                if (duration) {
+                    // Giới hạn clickX không ra ngoài thanh
+                    let newTime = (clickX / width) * duration;
+                    if(newTime < 0) newTime = 0;
+                    if(newTime > duration) newTime = duration;
+
+                    audio.currentTime = newTime;
+                }
+            }
+        });
+    }
+
+    // Hàm tính toán vị trí và hiển thị giao diện khi kéo
+    function updateProgress(e) {
+        const width = progressBar.clientWidth;
+        // Tính vị trí chuột so với thanh progressBar
+        let clickX = e.clientX - progressBar.getBoundingClientRect().left;
+
+        // Giới hạn không cho kéo ra ngoài thanh
+        if (clickX < 0) clickX = 0;
+        if (clickX > width) clickX = width;
+
+        const percent = (clickX / width) * 100;
+        progressFill.style.width = percent + "%";
+
+        // Cập nhật số giây hiển thị tạm thời khi đang kéo
+        if (audio.duration) {
+            const tempTime = (clickX / width) * audio.duration;
+            currentTimeEl.textContent = formatTime(tempTime);
+        }
+    }
+    // --- LOGIC VOLUME CONTROL ---
+
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeFill = document.getElementById('volumeFill');
+    const volumeIcon = document.getElementById('volumeIcon');
+    let lastVolume = 1; // Lưu lại volume trước khi mute để khôi phục
+
+    // 1. Xử lý khi click vào thanh Volume để chỉnh to nhỏ
+    if (volumeSlider) {
+        volumeSlider.addEventListener('click', function(e) {
+            const rect = this.getBoundingClientRect();
+            const width = rect.width;
+            let clickX = e.clientX - rect.left;
+
+            // Giới hạn
+            if(clickX < 0) clickX = 0;
+            if(clickX > width) clickX = width;
+
+            // Tính phần trăm (0 đến 1)
+            const percent = clickX / width;
+
+            // Cập nhật Audio
+            audio.volume = percent;
+
+            // (Giao diện sẽ tự cập nhật nhờ sự kiện volumechange bên dưới)
+        });
+    }
+
+    // 2. Lắng nghe sự kiện thay đổi volume của Audio (Đồng bộ giao diện)
+    audio.addEventListener('volumechange', function() {
+        // Cập nhật thanh trượt
+        const percent = audio.volume * 100;
+        if(volumeFill) volumeFill.style.width = percent + "%";
+
+        // Cập nhật Icon (Loa to, Loa nhỏ, Mute)
+        if(audio.muted || audio.volume === 0) {
+            volumeIcon.className = 'fas fa-volume-mute';
+        } else if (audio.volume < 0.5) {
+            volumeIcon.className = 'fas fa-volume-down';
+        } else {
+            volumeIcon.className = 'fas fa-volume-up';
+        }
+    });
+
+    // 3. Xử lý khi bấm vào Icon Loa (Bật/Tắt Mute)
+    if (volumeIcon) {
+        volumeIcon.addEventListener('click', function() {
+            if (audio.muted || audio.volume === 0) {
+                // Đang tắt -> Bật lại
+                audio.muted = false;
+                audio.volume = lastVolume || 1; // Khôi phục mức cũ
+            } else {
+                // Đang bật -> Tắt đi
+                lastVolume = audio.volume; // Lưu mức hiện tại
+                audio.muted = true;
+                audio.volume = 0; // Kéo về 0 cho chắc
+            }
+        });
+    }
+    // --- LOGIC NÚT REPEAT (LẶP LẠI) ---
+
+    const repeatBtn = document.getElementById('repeatBtn');
+    let isRepeat = false; // Biến theo dõi trạng thái
+
+    if (repeatBtn) {
+        repeatBtn.addEventListener('click', function() {
+            // 1. Đảo ngược trạng thái (Tắt -> Bật, Bật -> Tắt)
+            isRepeat = !isRepeat;
+
+            // 2. Cập nhật thuộc tính loop của thẻ Audio
+            // Nếu isRepeat = true thì audio sẽ tự động phát lại khi hết bài
+            audio.loop = isRepeat;
+
+            // 3. Cập nhật giao diện (Thêm/Xóa class active)
+            if (isRepeat) {
+                repeatBtn.classList.add('active');
+                // (Tùy chọn) Hiện thông báo nhỏ
+                // showNotification("Đã bật lặp lại bài hát", "success");
+            } else {
+                repeatBtn.classList.remove('active');
+                // showNotification("Đã tắt lặp lại", "success");
+            }
+        });
+    }
+    /* --- TOAST NOTIFICATION LOGIC --- */
+
+    // 1. Hàm hiển thị thông báo (Global function)
+    // type: 'success' hoặc 'error'
+    window.showToast = function(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+
+        // Tạo element thông báo
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        // Icon tương ứng
+        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+        toast.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px;">
+            <i class="fas ${iconClass}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+        // Thêm vào giao diện
+        container.appendChild(toast);
+
+        // Tự động xóa khỏi DOM sau 3.5s (3s hiện + 0.5s fadeOut)
+        setTimeout(() => {
+            toast.remove();
+        }, 3500);
+    };
+
+    // 2. Tự động check tin nhắn từ Server khi load trang
+    document.addEventListener('DOMContentLoaded', function() {
+        const successMsg = document.getElementById('serverSuccessMsg').value;
+        const errorMsg = document.getElementById('serverErrorMsg').value;
+
+        if (successMsg && successMsg.trim() !== "") {
+            showToast(successMsg, 'success');
+        }
+
+        if (errorMsg && errorMsg.trim() !== "") {
+            showToast(errorMsg, 'error');
+        }
+    });
+</script>
+
+<th:block layout:fragment="extra-js"></th:block>
+
+</body>
+</html>

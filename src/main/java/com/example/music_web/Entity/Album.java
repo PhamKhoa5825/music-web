@@ -1,16 +1,20 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
-import java.util.List;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Entity
+@Data
+@Table(name = "albums")
 public class Album {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long albumId;
 
     @Column(nullable = false)
     private String title;

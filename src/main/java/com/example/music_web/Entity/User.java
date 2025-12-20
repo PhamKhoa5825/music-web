@@ -1,10 +1,9 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 
-import javax.management.relation.Role;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")

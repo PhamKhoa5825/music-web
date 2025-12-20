@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title th:text="${song.title}">Song Detail</title>
+</head>
+
+<div layout:fragment="content">
+    <div class="song-detail-container">
+        <!-- Header Section: Cover + Info -->
+        <div class="song-header">
+            <div class="song-cover-large">
+                <img th:src="${song.imageUrl}" alt="Cover Image">
+            </div>
+
+            <div class="song-info-large">
+                <p class="song-label">Song</p>
+                <h1 class="song-title-large" th:text="${song.title}">Song Title</h1>
+
+                <div class="song-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-eye"></i>
+                        <span th:text="${song.views}">0</span> views
+                    </span>
+                    <span class="meta-item" th:if="${song.uploadDate}">
+                        <i class="fas fa-calendar"></i>
+                        <span th:text="${#temporals.format(song.uploadDate, 'dd/MM/yyyy')}">Date</span>
+                    </span>
+                    <span class="meta-item" th:if="${song.albumTitle}">
+                        <i class="fas fa-compact-disc"></i>
+                        <a th:href="@{/albums/{id}(id=${song.albumId})}"
+                           class="album-link-meta"
+                           th:text="${song.albumTitle}">Album</a>
+                    </span>
+                </div>
+
+                <button class="btn-play-large" onclick="playSongFromDetail()">
+                    <i class="fas fa-play"></i> Play
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Section: Lyrics + Artists -->
+        <div class="song-content">
+            <!-- Left: Lyrics -->
+            <div class="lyrics-section">
+                <h2 class="section-title">
+                    <i class="fas fa-music"></i> Lyrics
+                </h2>
+                <div class="lyrics-container" id="lyricsContainer">
+                    <pre class="lyrics-text" id="lyricsText" th:text="${song.lyric}">No lyrics available</pre>
+                </div>
+                <button class="btn-show-more" id="showMoreBtn" onclick="toggleLyrics()">
+                    Show more <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+
+            <div class="artists-section">
+                <h2 class="section-title">
+                    <i class="fas fa-user-music"></i> Artist
+                </h2>
+                <div class="artists-list">
+
+                    <a th:if="${song.artistId}"
+                       th:href="@{/artists/{id}(id=${song.artistId})}"
+                       class="artist-card">
+
+                        <div class="artist-avatar">
+                            <img th:src="${song.coverImage}"
+                                 th:alt="${song.artistName}"
+                                 onerror="this.src='https://via.placeholder.com/80'">
+                        </div>
+
+                        <div class="artist-info">
+                            <p class="artist-name" th:text="${song.artistName}">Artist Name</p>
+                            <p class="artist-role">Main Artist</p>
+                        </div>
+
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+
+                    <div th:unless="${song.artistId}" class="artist-card" style="cursor: default; opacity: 0.7;">
+                        <div class="artist-avatar">
+                            <img src="https://via.placeholder.com/80" alt="Unknown">
+                        </div>
+                        <div class="artist-info">
+                            <p class="artist-name">Unknown Artist</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="extra-css">
+    <style>
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #050505;
+
+            /* 2. Tạo các đốm sáng bằng radial-gradient */
+            background-image:
+                /* Đốm sáng chính (màu Teal của bạn) ở góc trên bên trái */
+                    radial-gradient(at 0% 0%, rgba(1, 109, 110, 0.3) 0px, transparent 50%),
+
+                        /* Đốm sáng phụ (màu tối hơn hoặc màu khác để tạo độ sâu) ở góc dưới phải */
+                    radial-gradient(at 100% 0%, rgba(1, 60, 60, 0.5) 0px, transparent 50%),
+
+                        /* Một chút ánh sáng nhẹ ở giữa để không bị tối om */
+                    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.02) 0px, transparent 50%);
+
+            /* 3. Cố định background để khi cuộn trang nó không bị trượt */
+            background-attachment: fixed;
+            background-size: 100% 100%;
+
+            min-height: 100vh;
+            color: white; /* Màu chữ mặc định */
+        }
+        .song-detail-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header Section */
+        .song-header {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+            align-items: start;
+        }
+
+        .song-cover-large {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+            0 0 40px rgba(224, 255, 255, 0.1);
+        }
+
+        .song-cover-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .play-overlay-large {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .song-cover-large:hover .play-overlay-large {
+            opacity: 1;
+        }
+
+        .play-overlay-large i {
+            color: #ffffff;
+            font-size: 4rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
+            0 0 40px rgba(255, 255, 255, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .song-cover-large:hover .play-overlay-large i {
+            transform: scale(1.1);
+        }
+
+        .song-info-large {
+            padding: 2rem 0;
+        }
+
+        .song-label {
+            color: rgba(224, 255, 255, 0.6);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .song-title-large {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #E0FFFF;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            text-shadow: 0 2px 20px rgba(224, 255, 255, 0.3);
+        }
+
+        .song-meta {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(224, 255, 255, 0.7);
+            font-size: 0.95rem;
+        }
+
+        .meta-item i {
+            color: #00CED1;
+            font-size: 0.9rem;
+        }
+
+        .album-link-meta {
+            color: rgba(224, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .album-link-meta:hover {
+            color: #00CED1;
+            text-decoration: underline;
+        }
+
+        .btn-play-large {
+            padding: 1rem 3rem;
+            background: linear-gradient(135deg, #00CED1 0%, #00B8BA 100%);
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 206, 209, 0.4);
+        }
+
+        .btn-play-large:hover {
+            background: linear-gradient(135deg, #00E5E8 0%, #00CED1 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 206, 209, 0.6);
+        }
+
+        .btn-play-large i {
+            font-size: 1rem;
+        }
+
+        /* Content Section */
+        .song-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #E0FFFF;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .section-title i {
+            color: #00CED1;
+            font-size: 1.3rem;
+        }
+
+        /* Lyrics Section */
+        .lyrics-section {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(224, 255, 255, 0.1);
+        }
+
+        .lyrics-container {
+            position: relative;
+            max-height: 400px;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+
+        .lyrics-container.expanded {
+            max-height: none;
+        }
+
+        .lyrics-text {
+            color: rgba(224, 255, 255, 0.8);
+            font-size: 1rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+        }
+
+        .lyrics-container:not(.expanded)::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.9));
+            pointer-events: none;
+        }
+
+        .btn-show-more {
+            margin-top: 1rem;
+            padding: 0.75rem 2rem;
+            background: rgba(0, 206, 209, 0.1);
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            border-radius: 50px;
+            color: #00CED1;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: fit-content;
+        }
+
+        .btn-show-more:hover {
+            background: rgba(0, 206, 209, 0.2);
+            border-color: #00CED1;
+        }
+
+        .btn-show-more i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-show-more.expanded i {
+            transform: rotate(180deg);
+        }
+
+        /* Artists Section */
+        .artists-section {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(224, 255, 255, 0.1);
+            height: fit-content;
+        }
+
+        .artists-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .artist-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .artist-card:hover {
+            background: rgba(0, 206, 209, 0.1);
+            border-color: rgba(0, 206, 209, 0.3);
+            transform: translateX(5px);
+        }
+
+        .artist-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .artist-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .artist-info {
+            flex: 1;
+        }
+
+        .artist-name {
+            color: #E0FFFF;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .artist-role {
+            color: rgba(224, 255, 255, 0.5);
+            font-size: 0.85rem;
+        }
+
+        .artist-card i {
+            color: rgba(224, 255, 255, 0.3);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .artist-card:hover i {
+            color: #00CED1;
+            transform: translateX(5px);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .song-header {
+                grid-template-columns: 300px 1fr;
+                gap: 2rem;
+            }
+
+            .song-cover-large {
+                width: 300px;
+                height: 300px;
+            }
+
+            .song-title-large {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .song-header {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .song-cover-large {
+                margin: 0 auto;
+            }
+
+            .song-meta {
+                justify-content: center;
+            }
+
+            .btn-play-large {
+                margin: 0 auto;
+            }
+
+            .song-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .song-cover-large {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
+            }
+
+            .song-title-large {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</th:block>
+
+<th:block layout:fragment="extra-js">
+    <script th:inline="javascript">
+        // Lấy dữ liệu bài hát từ Server
+        const songData = /*[[${song}]]*/ {};
+
+        // Hàm xử lý nút Play
+        function playSongFromDetail() {
+            // 1. Kiểm tra link nhạc
+            if (!songData.musicUrl) {
+                alert("Bài hát này chưa có link nhạc!");
+                return;
+            }
+
+            // 2. Lấy Audio Player toàn cục (từ layout.html)
+            var audio = document.getElementById('audioPlayer');
+            if (!audio) return;
+
+            // 3. CẬP NHẬT TRẠNG THÁI HỆ THỐNG (Quan trọng để tính View 30s)
+            // Nếu không có đoạn này, bộ đếm view ở layout sẽ không biết bài mới đã bắt đầu
+            if (typeof currentSongId !== 'undefined') currentSongId = songData.songId;
+            if (typeof isViewCounted !== 'undefined') isViewCounted = false;
+            if (typeof totalListeningTime !== 'undefined') totalListeningTime = 0;
+            if (typeof lastTimePosition !== 'undefined') lastTimePosition = 0;
+
+            // 4. Nạp nguồn nhạc
+            audio.src = songData.musicUrl;
+
+            // 5. Cập nhật giao diện thanh Player dưới đáy (Footer)
+            const titleEl = document.querySelector(".player-title");
+            const artistEl = document.querySelector(".player-artist");
+            const coverEl = document.querySelector(".player-img");
+
+            if (titleEl) titleEl.innerText = songData.title;
+
+            // Xử lý tên Artist (ManyToOne)
+            if (artistEl) {
+                // Ưu tiên 1: Lấy từ songData.artist.name (nếu là Entity)
+                // Ưu tiên 2: Lấy từ songData.artistName (nếu là DTO phẳng)
+                let artistName = "Unknown Artist";
+
+                if (songData.artist && songData.artist.name) {
+                    artistName = songData.artist.name;
+                } else if (songData.artistName) {
+                    artistName = songData.artistName;
+                } else if (songData.artist) {
+                    // Trường hợp artist chỉ là chuỗi tên
+                    artistName = songData.artist;
+                }
+
+                artistEl.innerText = artistName;
+            }
+
+            if (coverEl) coverEl.src = songData.imageUrl || '/images/default-cover.png';
+
+            // 6. Phát nhạc
+            audio.load();
+            audio.play().then(() => {
+                console.log("Đang phát: " + songData.title);
+
+                // Cập nhật icon Play/Pause ở Layout nếu có hàm này
+                if (typeof updatePlayPauseIcon === 'function') {
+                    isPlaying = true; // Biến toàn cục ở layout
+                    updatePlayPauseIcon();
+                }
+            }).catch(err => {
+                console.error("Lỗi phát nhạc:", err);
+            });
+        }
+
+        // Logic ẩn/hiện lời bài hát
+        function toggleLyrics() {
+            const container = document.getElementById('lyricsContainer');
+            const btn = document.getElementById('showMoreBtn');
+
+            container.classList.toggle('expanded');
+
+            if (container.classList.contains('expanded')) {
+                btn.innerHTML = 'Show less <i class="fas fa-chevron-up"></i>';
+                btn.classList.add('expanded');
+            } else {
+                btn.innerHTML = 'Show more <i class="fas fa-chevron-down"></i>';
+                btn.classList.remove('expanded');
+            }
+        }
+    </script>
+</th:block>
+</html>

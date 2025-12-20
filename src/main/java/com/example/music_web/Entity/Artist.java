@@ -1,9 +1,11 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
 @Table(name = "artists")
+@Data
 public class Artist {
 
     @Id
@@ -15,5 +17,6 @@ public class Artist {
 
     @Column
     private String description;
+    private String coverImage;
 }
 

@@ -1,11 +1,16 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "songs")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Song {
 
     @Id
@@ -44,5 +49,8 @@ public class Song {
     private Double averageRating;
     private Integer totalRatings;
     private String audioFeatures; // JSON/TEXT
+    @Lob
+    private String lyric;
+
 }
 

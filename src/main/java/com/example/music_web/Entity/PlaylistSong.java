@@ -1,7 +1,7 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
-import java.io.Serializable;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,12 +27,6 @@ public class PlaylistSong {
 
     // Getters and setters...
 }
-@Embeddable
-public class PlaylistSongId implements Serializable {
-    private Long playlistId;
-    private Long songId;
 
-    // Getters, setters, equals, and hashCode...
-}
 
 
