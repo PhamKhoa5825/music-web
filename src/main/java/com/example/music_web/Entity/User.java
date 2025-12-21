@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.persistence.Column;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -34,8 +35,21 @@ public class User implements UserDetails { // Implements UserDetails là bắt b
     @Column(nullable = false)
     private Role role;
 
+    @Column
+    private String avatar;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    // --- THÊM MỚI: Trạng thái khóa tài khoản ---
+    @Column(columnDefinition = "boolean default false")
+    private boolean locked = false;
+
+    // --- SỬA LẠI Logic Spring Security ---
+    @Override
+    public boolean isAccountNonLocked() {
+        return !locked; // Nếu locked = false thì tài khoản không bị khóa (true)
+    }
 
     // --- Logic của Spring Security ---
     @Override
@@ -46,8 +60,8 @@ public class User implements UserDetails { // Implements UserDetails là bắt b
 
     @Override
     public boolean isAccountNonExpired() { return true; }
-    @Override
-    public boolean isAccountNonLocked() { return true; }
+
+
     @Override
     public boolean isCredentialsNonExpired() { return true; }
     @Override

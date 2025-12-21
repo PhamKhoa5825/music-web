@@ -385,6 +385,53 @@
 </header>
 
 <div class="content">
+
+    <div class="card">
+        <h3>🖼️ Profile Picture</h3>
+        <div style="display: flex; align-items: center; gap: 2rem;">
+            <img th:src="${avatarUrl}" alt="Avatar"
+                 style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #00f3ff;">
+
+            <form th:action="@{/profile/upload-avatar}" method="post" enctype="multipart/form-data" style="flex: 1;">
+                <div class="form-group">
+                    <label>Upload new picture:</label>
+                    <input type="file" name="avatarFile" accept="image/*" required
+                           style="padding: 0.5rem; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px;">
+                </div>
+                <button type="submit" class="btn-save" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                    Upload
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🔒 Security Settings</h3>
+        <form th:action="@{/profile/change-password}" method="post">
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" name="oldPassword" required
+                       style="width: 100%; padding: 0.8rem; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 6px;">
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="newPassword" required
+                       style="width: 100%; padding: 0.8rem; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 6px;">
+            </div>
+            <button type="submit" class="btn-save" style="background: linear-gradient(45deg, #ff3366, #ff6b6b); color: white;">
+                Change Password
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${param.success}" class="success-message" style="margin-top: 1rem;">
+        <span>✅</span> <span th:text="${param.success}">Action successful!</span>
+    </div>
+    <div th:if="${param.error}" class="success-message" style="background: rgba(255, 50, 50, 0.1); border-color: red; color: red; margin-top: 1rem;">
+        <span>⚠️</span> <span th:text="${param.error}">Error occurred!</span>
+    </div>
+
+
     <div class="card">
         <h3>🎯 Account Information</h3>
         <div class="info-grid">
@@ -422,6 +469,7 @@
             <span>✅</span> Preferences updated successfully!
         </div>
     </div>
+
 </div>
 
 <div class="music-visualizer">

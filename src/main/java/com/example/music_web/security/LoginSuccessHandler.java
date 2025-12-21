@@ -27,6 +27,6 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         logService.log(user, "LOGIN", "User logged in successfully");
 
         // 3. Chuyển hướng người dùng (giống logic cũ)
-        response.sendRedirect("/profile");
+        response.sendRedirect("/");
     }
 }

@@ -4,6 +4,7 @@ package com.example.music_web.config;
 
 import com.example.music_web.repository.UserRepository;
 import com.example.music_web.security.LoginSuccessHandler;
+import com.example.music_web.security.LogoutLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,8 +25,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+
     private final UserRepository userRepository;
     private final LoginSuccessHandler loginSuccessHandler; // 1. Tiêm Handler
+    private final LogoutLogger logoutLogger;
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -79,12 +82,13 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         // Đăng nhập thành công thì về lại trang người dùng vừa bấm (hoặc về trang chủ)
-                        .defaultSuccessUrl("/", false)
+                        .successHandler(loginSuccessHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/") // Đăng xuất xong về trang chủ
+                        // 2. THAY ĐỔI DÒNG NÀY: Dùng handler của mình
+                        .logoutSuccessHandler(logoutLogger)
                         .permitAll()
                 );
 

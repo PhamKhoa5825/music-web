@@ -5,10 +5,12 @@ import com.example.music_web.dto.AuthDTO;
 import com.example.music_web.enums.Role;
 import com.example.music_web.repository.UserRepository;
 import com.example.music_web.service.SystemLogService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +38,12 @@ public class AuthController {
 
     // Xử lý đăng ký
     @PostMapping("/register")
-    public String registerUser(@ModelAttribute AuthDTO.RegisterRequest request, Model model) {
+    public String registerUser(@Valid @ModelAttribute("user") AuthDTO.RegisterRequest request,
+                               BindingResult bindingResult, // Chứa kết quả lỗi nếu có
+                               Model model) {
+        if (bindingResult.hasErrors()) {
+            return "register"; // Trả về trang register kèm lỗi hiển thị
+        }
         if (userRepository.existsByUsername(request.getUsername())) {
             model.addAttribute("error", "Username đã tồn tại!");
             return "register";

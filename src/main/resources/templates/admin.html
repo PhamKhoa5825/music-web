@@ -160,6 +160,11 @@
 
   <div class="card">
     <h2>👥 User Management</h2>
+
+    <div th:if="${param.message}" style="color: var(--success); margin-bottom: 1rem;">
+      ✅ Action completed successfully!
+    </div>
+
     <div class="table-container">
       <table>
         <thead>
@@ -167,20 +172,40 @@
           <th>ID</th>
           <th>Username</th>
           <th>Role</th>
-          <th>Joined At</th>
-          <th>Status</th>
-        </tr>
+          <th>Status</th> <th>Actions</th> </tr>
         </thead>
         <tbody>
         <tr th:each="user : ${users}">
           <td th:text="'#' + ${user.userId}">#1</td>
           <td style="font-weight: bold; color: #fff;" th:text="${user.username}">admin</td>
           <td>
-                            <span th:class="${'badge ' + (user.role.name() == 'ADMIN' ? 'role-admin' : 'role-user')}"
-                                  th:text="${user.role}">ADMIN</span>
+                        <span th:class="${'badge ' + (user.role.name() == 'ADMIN' ? 'role-admin' : 'role-user')}"
+                              th:text="${user.role}">ADMIN</span>
           </td>
-          <td class="log-time" th:text="${#temporals.format(user.createdAt, 'dd-MM-yyyy HH:mm')}">12-10-2025</td>
-          <td><span style="color: var(--primary);">● Active</span></td>
+
+          <td>
+            <span th:if="${!user.locked}" style="color: var(--primary);">● Active</span>
+            <span th:if="${user.locked}" style="color: var(--danger);">● Locked</span>
+          </td>
+
+          <td style="display: flex; gap: 10px;">
+            <div th:if="${user.username != #authentication.name}">
+
+              <form th:action="@{/admin/user/toggle-lock/{id}(id=${user.userId})}" method="post" style="display:inline;">
+                <button type="submit"
+                        th:style="${user.locked ? 'border-color:#00ff88; color:#00ff88;' : 'border-color:#ffaa00; color:#ffaa00;'}"
+                        class="btn-logout"
+                        th:text="${user.locked ? 'UNLOCK' : 'LOCK'}">
+                  LOCK
+                </button>
+              </form>
+
+              <form th:action="@{/admin/user/delete/{id}(id=${user.userId})}" method="post" style="display:inline;"
+                    onsubmit="return confirm('Are you sure you want to delete this user?');">
+                <button type="submit" class="btn-logout">DELETE</button>
+              </form>
+            </div>
+          </td>
         </tr>
         </tbody>
       </table>
