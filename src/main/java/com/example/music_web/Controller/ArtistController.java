@@ -82,6 +82,7 @@ public class ArtistController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", "Field cannot empty!!!");
             model.addAttribute("isEdit", false);
             return "artists/upload";
         }
@@ -138,6 +139,7 @@ public class ArtistController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", "Field cannot empty!!!");
             ArtistResponse artist = artistService.getArtistById(artistId);
             model.addAttribute("artist", artist);
             model.addAttribute("artistId", artistId);

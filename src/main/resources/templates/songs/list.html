@@ -6,22 +6,45 @@
     <title>Songs</title>
 </head>
 
+<body>
 <div layout:fragment="content">
+
+    <!-- ✅ THÊM: SCRIPT ẨN CHỨA DỮ LIỆU JSON (THYMELEAF RENDER MỖI LẦN) -->
+    <script type="application/json" id="songs-data" th:inline="javascript">
+        /*[[${songs.content}]]*/
+    </script>
+
     <div class="page-header">
         <h1>All Songs</h1>
     </div>
 
     <div class="filter-bar">
-        <form method="get" action="/songs" class="filter-form">
+        <form hx-get="/songs"
+              hx-target="#main-content"
+              hx-select="#main-content"
+              hx-push-url="true"
+              hx-trigger="submit"
+              class="filter-form"
+              onsubmit="return false;">
             <div class="search-wrapper">
                 <i class="fas fa-search search-icon"></i>
                 <input type="text" name="title"
                        th:value="${title}"
                        placeholder="Search songs..."
-                       class="filter-input">
+                       class="filter-input"
+                       hx-get="/songs"
+                       hx-trigger="keyup changed delay:500ms"
+                       hx-target="#main-content"
+                       hx-select="#main-content"
+                       hx-include=".filter-form">
             </div>
 
-            <select name="artistId" class="filter-select" onchange="this.form.submit()">
+            <select name="artistId" class="filter-select"
+                    hx-get="/songs"
+                    hx-trigger="change"
+                    hx-target="#main-content"
+                    hx-select="#main-content"
+                    hx-include=".filter-form">
                 <option value="">All Artists</option>
                 <option th:each="artist : ${artists}"
                         th:value="${artist.artistId}"
@@ -30,7 +53,12 @@
                 </option>
             </select>
 
-            <select name="albumId" class="filter-select" onchange="this.form.submit()">
+            <select name="albumId" class="filter-select"
+                    hx-get="/songs"
+                    hx-trigger="change"
+                    hx-target="#main-content"
+                    hx-select="#main-content"
+                    hx-include=".filter-form">
                 <option value="">All Albums</option>
                 <option th:each="album : ${albums}"
                         th:value="${album.albumId}"
@@ -39,7 +67,12 @@
                 </option>
             </select>
 
-            <select name="genreId" class="filter-select" onchange="this.form.submit()">
+            <select name="genreId" class="filter-select"
+                    hx-get="/songs"
+                    hx-trigger="change"
+                    hx-target="#main-content"
+                    hx-select="#main-content"
+                    hx-include=".filter-form">
                 <option value="">All Genres</option>
                 <option th:each="genre : ${genres}"
                         th:value="${genre.genreId}"
@@ -52,13 +85,12 @@
                 <i class="fas fa-search"></i> Search
             </button>
 
-            <a href="/songs" class="btn btn-reset">
+            <a href="/songs" class="btn btn-reset" hx-boost="true">
                 <i class="fas fa-redo"></i> Reset
             </a>
         </form>
     </div>
 
-    <!-- Table Layout -->
     <div class="songs-table-container">
         <table class="songs-table">
             <thead>
@@ -77,12 +109,13 @@
                 th:data-song-id="${song.songId}">
 
                 <td class="col-number">
-                    <span class="row-number" th:text="${iterStat.index + 1}">1</span>
+                    <span class="row-number" th:text="${songs.number * songs.size + iterStat.index + 1}">1</span>
                 </td>
 
                 <td class="col-title">
                     <div class="title-cell">
-                        <div class="song-cover" onclick="playSongFromCard(this.getAttribute('data-song-id'))" th:data-song-id="${song.songId}">
+                        <div class="song-cover play-song-trigger"
+                             th:data-song-id="${song.songId}">
                             <img th:src="${song.imageUrl}" alt="Cover Image">
                             <div class="play-overlay">
                                 <i class="fas fa-play"></i>
@@ -116,71 +149,69 @@
 
                 <td class="col-genre">
                     <span th:each="genre, iter : ${song.genres}">
-
                         <a th:href="@{/genres/{id}(id=${genre.genreId})}"
                            class="genre-link"
                            th:text="${genre.name}">
                            Genre Name
                         </a>
-
                         <span th:if="${!iter.last}">, </span>
                     </span>
-
                     <span th:if="${song.genres == null}">-</span>
                 </td>
+
                 <td class="col-views">
-
-                    <span class="View" th:text="${song.views}">03:45</span>
-
+                    <span class="View" th:text="${song.views}">0</span>
                 </td>
 
-            </tr>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <div class="pagination-container">
-
-
+    <div class="pagination-container" th:if="${songs.totalPages > 0}">
         <div class="pagination">
-            <a th:if="${songs.number > 0}"
-               th:href="@{/songs(title=${title}, artistId=${artistId}, albumId=${albumId}, genreId=${genreId}, page=${songs.number - 1}, size=${pageSize})}"
-               class="pagination-btn">
+            <a th:if="${songs.hasPrevious()}"
+               th:href="@{/songs(title=${title}, artistId=${selectedArtistId}, albumId=${selectedAlbumId}, genreId=${selectedGenreId}, page=${songs.number - 1}, size=${pageSize})}"
+               class="pagination-btn"
+               hx-boost="true">
                 <i class="fas fa-chevron-left"></i>
             </a>
 
             <span th:each="i : ${#numbers.sequence(0, songs.totalPages - 1)}">
-                </span>
-            <span th:if="${songs.totalPages > 0}" th:each="i : ${#numbers.sequence(0, songs.totalPages - 1)}">
                 <a th:if="${i == songs.number}"
                    class="pagination-btn active"
                    th:text="${i + 1}">1</a>
+
                 <a th:unless="${i == songs.number}"
-                   th:href="@{/songs(title=${title}, artistId=${artistId}, albumId=${albumId}, genreId=${genreId}, page=${i}, size=${pageSize})}"
+                   th:href="@{/songs(title=${title}, artistId=${selectedArtistId}, albumId=${selectedAlbumId}, genreId=${selectedGenreId}, page=${i}, size=${pageSize})}"
                    class="pagination-btn"
-                   th:text="${i + 1}">1</a>
+                   th:text="${i + 1}"
+                   hx-boost="true">2</a>
             </span>
 
-            <a th:if="${songs.number < songs.totalPages - 1}"
-               th:href="@{/songs(title=${title}, artistId=${artistId}, albumId=${albumId}, genreId=${genreId}, page=${songs.number + 1}, size=${pageSize})}"
-               class="pagination-btn">
+            <a th:if="${songs.hasNext()}"
+               th:href="@{/songs(title=${title}, artistId=${selectedArtistId}, albumId=${selectedAlbumId}, genreId=${selectedGenreId}, page=${songs.number + 1}, size=${pageSize})}"
+               class="pagination-btn"
+               hx-boost="true">
                 <i class="fas fa-chevron-right"></i>
             </a>
         </div>
 
         <div class="page-size-selector">
             <label>Show:</label>
-            <select onchange="changePageSize(this.value)">
+            <select name="size"
+                    hx-get="/songs"
+                    hx-trigger="change"
+                    hx-target="#main-content"
+                    hx-select="#main-content"
+                    hx-include=".filter-form">
                 <option value="10" th:selected="${pageSize == 10}">10</option>
                 <option value="20" th:selected="${pageSize == 20}">20</option>
                 <option value="50" th:selected="${pageSize == 50}">50</option>
             </select>
         </div>
     </div>
-</div>
 
-<th:block layout:fragment="extra-css">
     <style>
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -206,7 +237,6 @@
             text-shadow: 0 2px 10px rgba(224, 255, 255, 0.3);
         }
 
-        /* Filter Bar */
         .filter-bar {
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(10px);
@@ -318,7 +348,6 @@
             border-color: #00CED1;
         }
 
-        /* Table Layout */
         .songs-table-container {
             background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(10px);
@@ -348,31 +377,12 @@
             letter-spacing: 0.5px;
         }
 
-        .col-number {
-            width: 60px;
-        }
-
-        .col-title {
-            width: 29%;
-        }
-
-        .col-artist {
-            width: 18%;
-        }
-
-        .col-album {
-            width: 18%;
-            text-align: left;
-        }
-        .col-genre {
-            width: 25%;
-            text-align: left;
-        }
-
-        .col-views {
-            width: 10%;
-            text-align: left;
-        }
+        .col-number { width: 60px; }
+        .col-title { width: 29%; }
+        .col-artist { width: 18%; }
+        .col-album { width: 18%; text-align: left; }
+        .col-genre { width: 25%; text-align: left; }
+        .col-views { width: 10%; text-align: left; }
 
         .songs-table tbody tr {
             border-bottom: 1px solid rgba(224, 255, 255, 0.05);
@@ -394,7 +404,6 @@
             font-size: 0.9rem;
         }
 
-        /* Title Cell */
         .title-cell {
             display: flex;
             align-items: center;
@@ -423,54 +432,42 @@
             transform: scale(1.1);
         }
 
-        /* --- Bắt đầu phần chỉnh sửa --- */
-
         .play-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            /* Nền tối mờ nhẹ để làm nổi icon trắng */
             background: rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             transition: all 0.3s ease;
-            backdrop-filter: blur(2px); /* Làm mờ ảnh bìa bên dưới một chút */
+            backdrop-filter: blur(2px);
         }
 
-        /* Khi hover vào ảnh bìa thì hiện overlay */
         .song-cover:hover .play-overlay {
             opacity: 1;
         }
 
-        /* Định dạng icon tam giác (Play) */
         .play-overlay i {
-            color: #ffffff; /* Màu trắng tinh */
-            font-size: 1rem; /* Kích thước icon */
-
-            /* TẠO HIỆU ỨNG LOANG MÀU TRẮNG (GLOW) */
+            color: #ffffff;
+            font-size: 1rem;
             text-shadow:
-                    0 0 10px rgba(255, 255, 255, 0.8),  /* Lớp loang gần */
-                    0 0 20px rgba(255, 255, 255, 0.5),  /* Lớp loang vừa */
-                    0 0 30px rgba(255, 255, 255, 0.3);  /* Lớp loang xa */
-
-            transform: scale(0.8); /* Mặc định nhỏ hơn chút */
+                    0 0 10px rgba(255, 255, 255, 0.8),
+                    0 0 20px rgba(255, 255, 255, 0.5),
+                    0 0 30px rgba(255, 255, 255, 0.3);
+            transform: scale(0.8);
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Khi hover, icon phóng to nhẹ và sáng hơn */
         .song-cover:hover .play-overlay i {
             transform: scale(1.1);
             text-shadow:
                     0 0 15px rgba(255, 255, 255, 1),
                     0 0 30px rgba(255, 255, 255, 0.6);
         }
-
-        /* Xóa bỏ style cũ của bạn nếu có (đoạn .play-overlay:hover đổi màu nền xanh) */
-        /* --- Kết thúc phần chỉnh sửa --- */
 
         .song-title-info {
             flex: 1;
@@ -487,40 +484,21 @@
             margin-bottom: 0.25rem;
         }
 
-        .song-views {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: rgba(224, 255, 255, 0.5);
-            font-size: 0.8rem;
-        }
-
-        .song-views i {
-            color: #00CED1;
-            font-size: 0.75rem;
-        }
-
-
-        .artist-link,
-        .album-link,
-        .song-link,
-        .genre-link{
+        .artist-link, .album-link, .song-link, .genre-link {
             color: rgba(224, 255, 255, 0.8);
-            text-decoration: none !important; /* Thêm !important để ép buộc bỏ gạch chân */
+            text-decoration: none !important;
             transition: color 0.3s ease;
         }
 
-
-        .artist-link:hover,
-        .album-link:hover,
-        .song-link:hover,
-        .genre-link:hover{
+        .artist-link:hover, .album-link:hover, .song-link:hover, .genre-link:hover {
             color: #00CED1;
             text-decoration: underline !important;
         }
 
         .album-cell {
             display: flex;
+            gap: 0.5rem;
+            align-items: center;
         }
 
         .album-cell i {
@@ -537,7 +515,6 @@
             font-size: 0.9rem;
         }
 
-        /* Pagination */
         .pagination-container {
             display: flex;
             justify-content: space-between;
@@ -547,11 +524,6 @@
             backdrop-filter: blur(10px);
             border-radius: 16px;
             border: 1px solid rgba(224, 255, 255, 0.1);
-        }
-
-        .pagination-info {
-            color: rgba(224, 255, 255, 0.6);
-            font-size: 0.9rem;
         }
 
         .pagination {
@@ -608,211 +580,194 @@
             border-color: #00CED1;
         }
 
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .col-genre {
-
-            }
-            .col-album {
-            }
-
-            .col-artist {
-                width: 30%;
-            }
-
-            .col-title {
-                width: 50%;
-            }
-        }
-
         @media (max-width: 768px) {
             .filter-form {
                 flex-direction: column;
             }
-
-            .search-wrapper,
-            .filter-select {
+            .search-wrapper, .filter-select {
                 width: 100%;
             }
-
-            .songs-table-container {
-                overflow-x: auto;
-            }
-
-            .col-views {
-
-            }
-
             .pagination-container {
                 flex-direction: column;
                 gap: 1rem;
             }
-
         }
     </style>
-</th:block>
 
-<th:block layout:fragment="extra-js">
-    <script th:inline="javascript">
-        // 1. Lấy dữ liệu từ Server (Thymeleaf render ra JSON)
-        const songsData = /*[[${songs.content}]]*/ [];
-
-        // 2. Khởi tạo trình phát nhạc (Audio Object)
-        var audio = document.getElementById('audioPlayer');
-        var isPlaying = false;
-        var currentIndex = 0;
-        var isViewCounted = false; // Biến kiểm soát việc tăng view
-        var currentSongId = null;  // Lưu ID bài đang hát
-
-        // --- 2. SỰ KIỆN CANH GIỜ
-        var totalListeningTime = 0; // Tổng thời gian đã nghe thực tế
-        var lastTimePosition = 0;   // Lưu vị trí thời gian của lần cập nhật trước
-
-        // --- 2. SỰ KIỆN TIMEUPDATE (LOGIC CHỐNG TUA) ---
-        audio.addEventListener('timeupdate', function() {
-            if (!currentSongId || isViewCounted) return;
-
-            var currentTime = this.currentTime;
-
-            // Tính khoảng cách thời gian so với lần cập nhật trước
-            var timeDiff = currentTime - lastTimePosition;
-
-            // --- LOGIC CHỐNG GIAN LẬN ---
-            // Sự kiện timeupdate thường chạy mỗi 0.2 - 0.3 giây.
-            // Nếu timeDiff > 1 giây (hoặc âm), tức là người dùng vừa KÉO THANH TRƯỢT.
-            // Ta chỉ cộng thời gian nếu timeDiff là hợp lý (nhạc chạy bình thường).
-            if (timeDiff > 0 && timeDiff < 1) {
-                totalListeningTime += timeDiff;
+    <script>
+        // ✅ ĐỌC DỮ LIỆU TỪ <script type="application/json">
+        function loadSongsData() {
+            const dataElement = document.getElementById('songs-data');
+            if (!dataElement) {
+                console.error("❌ Không tìm thấy #songs-data");
+                return [];
             }
 
-            // Cập nhật lại vị trí cũ để dùng cho lần sau
-            lastTimePosition = currentTime;
-
-            // Kiểm tra: Nếu tổng thời gian nghe thực > 30s
-            if (totalListeningTime > 30) {
-                console.log("Đã nghe đủ 30s thực tế -> Tăng View");
-                incrementSongView(currentSongId);
-                isViewCounted = true; // Khóa lại
+            try {
+                const jsonText = dataElement.textContent.trim();
+                const songs = JSON.parse(jsonText);
+                console.log("✅ Loaded", songs.length, "songs from JSON");
+                return songs;
+            } catch (e) {
+                console.error("❌ Parse JSON error:", e);
+                return [];
             }
+        }
+
+        // ✅ CACHE GLOBAL
+        if (!window.allSongsData) {
+            window.allSongsData = {};
+        }
+
+        // Lưu bài hát vào cache
+        const currentPageSongs = loadSongsData();
+        currentPageSongs.forEach(song => {
+            window.allSongsData[song.songId] = song;
         });
 
-        // --- 3. HÀM GỌI API (ĐỂ RA NGOÀI CHO GỌN) ---
-        function incrementSongView(songId) {
-            fetch(`/songs/${songId}/increment-view`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-                .then(response => {
-                    if (response.ok) {
-                        console.log(`View +1 thành công cho bài ${songId}`);
-                        updateViewCountOnUI(songId);
-                    }
-                })
-                .catch(e => console.error("Lỗi tăng view:", e));
-        }
+        console.log("📊 Total cached songs:", Object.keys(window.allSongsData).length);
 
-        // Hàm cập nhật giao diện
-        function updateViewCountOnUI(songId) {
-            const row = document.querySelector(`tr[data-song-id='${songId}']`);
-            if (row) {
-                const viewCell = row.querySelector(".col-views span");
-                if (viewCell) {
-                    let currentViews = parseInt(viewCell.innerText.replace(/,/g, '')) || 0;
-                    viewCell.innerText = currentViews + 1;
+        // ✅ KHỞI TẠO AUDIO PLAYER (1 LẦN)
+        if (!window.audioPlayerInitialized) {
+            window.audioPlayerInitialized = true;
+
+            const audio = document.getElementById('audioPlayer');
+            window.currentSongId = null;
+            window.isViewCounted = false;
+            window.totalListeningTime = 0;
+            window.lastTimePosition = 0;
+
+            audio.addEventListener('timeupdate', function() {
+                if (!window.currentSongId || window.isViewCounted) return;
+
+                const timeDiff = this.currentTime - window.lastTimePosition;
+
+                if (timeDiff > 0 && timeDiff < 1) {
+                    window.totalListeningTime += timeDiff;
                 }
-            }
+
+                window.lastTimePosition = this.currentTime;
+
+                if (window.totalListeningTime > 30) {
+                    console.log("🎉 30s reached → increment view");
+                    fetch(`/songs/${window.currentSongId}/increment-view`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    }).then(response => {
+                        if (response.ok) {
+                            const row = document.querySelector(`tr[data-song-id='${window.currentSongId}']`);
+                            if (row) {
+                                const viewCell = row.querySelector(".col-views span");
+                                if (viewCell) {
+                                    let views = parseInt(viewCell.innerText) || 0;
+                                    viewCell.innerText = views + 1;
+                                }
+                            }
+                        }
+                    });
+                    window.isViewCounted = true;
+                }
+            });
+
+            audio.onended = () => {
+                const icon = document.querySelector("#playPauseBtn i");
+                if (icon) {
+                    icon.classList.remove("fa-pause");
+                    icon.classList.add("fa-play");
+                }
+            };
+
+            audio.onplay = () => {
+                const icon = document.querySelector("#playPauseBtn i");
+                if (icon) {
+                    icon.classList.remove("fa-play");
+                    icon.classList.add("fa-pause");
+                }
+            };
+
+            audio.onpause = () => {
+                const icon = document.querySelector("#playPauseBtn i");
+                if (icon) {
+                    icon.classList.remove("fa-pause");
+                    icon.classList.add("fa-play");
+                }
+            };
         }
 
-        // --- HÀM 1: Xử lý khi click vào ảnh bìa ---
-        function playSongFromCard(songId) {
-            // Tìm bài hát trong danh sách dựa vào ID
-            const song = songsData.find(s => s.songId == songId);
+        // ✅ HÀM PHÁT NHẠC
+        function playSong(songId) {
+            const song = window.allSongsData[songId];
 
-            if (song) {
-                console.log("Đang phát bài:", song.title);
-                console.log("Link nhạc:", song.musicUrl); // Debug xem link có đúng không
-
-                currentIndex = songsData.indexOf(song);
-                playSong(song);
-            } else {
-                console.error("Không tìm thấy bài hát với ID:", songId);
+            if (!song) {
+                console.error("❌ Song not found:", songId);
+                console.log("📋 Available songs:", Object.keys(window.allSongsData));
+                return;
             }
-        }
 
-        // --- HÀM 2: Logic phát nhạc chính ---
-        function playSong(song) {
-            // [QUAN TRỌNG] Kiểm tra xem có link nhạc không
             if (!song.musicUrl) {
                 alert("Bài hát này chưa có link nhạc!");
                 return;
             }
-            currentSongId = song.songId; // 1. Lưu ID bài mới vào biến toàn cục
-            isViewCounted = false;
-            totalListeningTime = 0; // Reset tổng thời gian nghe về 0
-            lastTimePosition = 0;   // Reset vị trí cũ về 0
 
-            // Gán link Cloudinary vào trình phát
+            const audio = document.getElementById('audioPlayer');
+
+            window.currentSongId = song.songId;
+            window.isViewCounted = false;
+            window.totalListeningTime = 0;
+            window.lastTimePosition = 0;
+
             audio.src = song.musicUrl;
 
-            // --- Cập nhật giao diện Player (Footer) ---
-            // Bạn cần đảm bảo file layout.html có các class này ở phần Footer
-
-            // 1. Tên bài hát
             const titleEl = document.querySelector(".player-title");
             if (titleEl) titleEl.innerText = song.title;
 
-            // 2. Tên nghệ sĩ
             const artistEl = document.querySelector(".player-artist");
-            if (artistEl) artistEl.innerText = song.artistName || "Unknown Artist"; // Dùng artistName từ DTO
+            if (artistEl) artistEl.innerText = song.artistName || "Unknown Artist";
 
-            // 3. Ảnh bìa (Cover)
             const coverEl = document.querySelector(".player-img");
-            // Ưu tiên ảnh bìa riêng, nếu không có thì dùng ảnh mặc định
-            if (coverEl) coverEl.src = song.imageUrl || song.imageUrl || '/images/default-cover.png';
+            if (coverEl) coverEl.src = song.imageUrl || '/images/default-cover.png';
 
-            // --- Bắt đầu phát ---
-            audio.load(); // Load link mới
+            audio.load();
             audio.currentTime = 0;
 
             audio.play().then(() => {
-                lastTimePosition = audio.currentTime;
-                isPlaying = true;
-                updatePlayPauseIcon(); // Đổi icon nút Play thành Pause
+                window.lastTimePosition = audio.currentTime;
+                console.log("▶️ Playing:", song.title);
             }).catch(err => {
-                console.error("Lỗi khi phát nhạc:", err);
-                alert("Không thể phát bài hát này (Lỗi: " + err.message + ")");
+                console.error("❌ Play error:", err);
+                alert("Không thể phát: " + err.message);
+            });
+        }
+
+        // ✅ GÁN EVENT LISTENER
+        function attachPlayListeners() {
+            document.querySelectorAll('.play-song-trigger').forEach(el => {
+                el.replaceWith(el.cloneNode(true));
             });
 
+            document.querySelectorAll('.play-song-trigger').forEach(el => {
+                el.addEventListener('click', function() {
+                    const songId = parseInt(this.getAttribute('data-song-id'));
+                    console.log("🎵 Click play song ID:", songId);
+                    playSong(songId);
+                });
+            });
         }
 
-        // --- HÀM 3: Đổi Icon nút Play/Pause ở Footer ---
-        function updatePlayPauseIcon() {
-            // Tìm nút play ở footer (giả sử ID là #play-btn)
-            const playIcon = document.querySelector("#play-btn i");
-            if (playIcon) {
-                if (isPlaying) {
-                    playIcon.classList.remove("fa-play");
-                    playIcon.classList.add("fa-pause");
-                } else {
-                    playIcon.classList.remove("fa-pause");
-                    playIcon.classList.add("fa-play");
-                }
-            }
-        }
+        attachPlayListeners();
 
-        // Sự kiện: Khi bài hát kết thúc -> Reset trạng thái
-        audio.onended = function() {
-            isPlaying = false;
-            updatePlayPauseIcon();
-        };
+        document.body.addEventListener('htmx:afterSwap', function() {
+            // Load lại dữ liệu từ JSON mới
+            const newSongs = loadSongsData();
+            newSongs.forEach(song => {
+                window.allSongsData[song.songId] = song;
+            });
+            console.log("🔄 After swap - total cache:", Object.keys(window.allSongsData).length);
 
-        // Sự kiện: Xử lý nút phân trang (Giữ nguyên code cũ của bạn)
-        function changePageSize(size) {
-            const url = new URL(window.location);
-            url.searchParams.set('size', size);
-            url.searchParams.set('page', '0');
-            window.location = url;
-        }
+            attachPlayListeners();
+        });
     </script>
-</th:block>
+
+</div>
+</body>
 </html>

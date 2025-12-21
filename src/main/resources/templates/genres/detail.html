@@ -120,9 +120,7 @@
             </div>
         </div>
     </div>
-</div>
 
-<th:block layout:fragment="extra-css">
     <style>
 
         body {
@@ -523,9 +521,7 @@
             }
         }
     </style>
-</th:block>
 
-<th:block layout:fragment="extra-js">
     <script th:inline="javascript">
         // Lấy dữ liệu bài hát từ server
         const songsData = /*[[${songs.content}]]*/ [];
@@ -643,5 +639,13 @@
             window.location = url;
         }
     </script>
+</div>
+
+<th:block layout:fragment="extra-css">
+
+</th:block>
+
+<th:block layout:fragment="extra-js">
+
 </th:block>
 </html>

@@ -79,6 +79,7 @@ public class GenreController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", "Field cannot empty!!!");
             model.addAttribute("isEdit", false);
             return "genres/upload";
         }
@@ -133,6 +134,7 @@ public class GenreController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", "Field cannot empty!!!");
             GenreResponse genre = genreService.getGenreById(genreId);
             model.addAttribute("genre", genre);
             model.addAttribute("genreId", genreId);

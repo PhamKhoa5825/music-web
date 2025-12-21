@@ -1,5 +1,6 @@
 package com.example.music_web.ExceptionHandler;
 
+
 public enum ErrorCode {
     SONG_NOT_EXISTED(1001, "Song not existed !!!"),
     ARTIST_NOT_EXISTED(1002, "Artist not existed !!!"),

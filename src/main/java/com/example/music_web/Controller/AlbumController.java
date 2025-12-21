@@ -85,6 +85,8 @@ public class AlbumController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", "Field cannot empty!!!");
+
             model.addAttribute("artists", artistRepo.findAll());
             model.addAttribute("isEdit", false);
             return "albums/upload";
@@ -145,6 +147,8 @@ public class AlbumController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", "Field cannot empty!!!");
+
             AlbumResponse album = albumService.getAlbumById(albumId);
             model.addAttribute("album", album);
             model.addAttribute("albumId", albumId);
