@@ -45,8 +45,7 @@ public class SongController {
             @RequestParam(defaultValue = "10") int size,
             Model model
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("uploadDate"),
-                                                                Sort.Order.desc("songId")));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("uploadDate")));
         // 1. Lấy danh sách bài hát đã lọc
         model.addAttribute("songs", songService.getAllSongs(title, artistId, albumId, genreId, pageable));
 
@@ -110,7 +109,6 @@ public class SongController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("errorMessage", "Field cannot empty!!!");
             model.addAttribute("artists", artistRepo.findAll());
             model.addAttribute("albums", albumRepo.findAll());
             model.addAttribute("genres", genreRepo.findAll());

@@ -42,12 +42,12 @@ public class ArtistService {
 
     public ArtistResponse createArtist(CreateArtistRequest request) {
         Artist artist = artistMapper.toArtist(request);
-
+        Artist savedArtist = artistRepo.save(artist);
         if (request.getCoverImage() != null && !request.getCoverImage().isEmpty()) {
             UploadResponse response = cloudinaryService.uploadCover(request.getCoverImage());
             artist.setCoverImage(response.getUrl());
         }
-        Artist savedArtist = artistRepo.save(artist);
+
         return artistMapper.toArtistResponse(savedArtist);
     }
 

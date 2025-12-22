@@ -17,7 +17,6 @@
     <div class="upload-container">
         <form id="uploadForm"
               th:action="@{${isEdit ? '/artists/' + artistId + '/edit' : '/artists/upload'}}"
-              hx-boost="false"
               method="post"
               enctype="multipart/form-data"
               th:object="${artistRequest}"
@@ -71,6 +70,9 @@
         </form>
     </div>
 
+</div>
+
+<th:block layout:fragment="extra-css">
     <style>
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -393,77 +395,13 @@
             cursor: not-allowed;
             box-shadow: none;
         }
-        /* Loading Overlay */
-        #uploadLoadingOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .loading-content {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(0, 206, 209, 0.2);
-            border-top-color: #00CED1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 0 20px rgba(0, 206, 209, 0.3);
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            font-size: 1.3rem;
-            color: #E0FFFF;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .loading-subtext {
-            font-size: 0.95rem;
-            color: rgba(224, 255, 255, 0.6);
-        }
-
-        /* Loading state for submit button */
-        .btn-submit.loading {
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-
-        .fa-spinner {
-            animation: spin 1s linear infinite;
-        }
     </style>
+</th:block>
 
+<th:block layout:fragment="extra-js">
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // --- COVER IMAGE HANDLING ---
+            // Logic xử lý Preview ảnh (chung cho cả Create/Edit)
             const coverInput = document.getElementById('coverInput');
             const coverPlaceholder = document.getElementById('coverPlaceholder');
             const coverPreview = document.getElementById('coverPreview');
@@ -471,10 +409,12 @@
             const uploadArea = document.getElementById('coverUploadArea');
 
             if (coverInput) {
+                // Click vùng upload -> mở chọn file
                 uploadArea.addEventListener('click', (e) => {
                     if (!e.target.closest('.btn-remove')) coverInput.click();
                 });
 
+                // Khi chọn file -> Hiện preview
                 coverInput.addEventListener('change', function() {
                     const file = this.files[0];
                     if (file) {
@@ -488,92 +428,23 @@
                     }
                 });
 
-                // Reset cover with confirmation
+                // Nút X -> Reset
                 window.resetCover = function() {
-                    const hasImage = coverPreview.style.display !== 'none' || coverPreviewImg.src;
-
-                    if (hasImage) {
-                        if (confirm('Are you sure you want to remove this cover image?')) {
-                            coverInput.value = "";
-                            coverPlaceholder.style.display = 'flex';
-                            coverPreview.style.display = 'none';
-                            coverPreviewImg.src = "";
-                        }
-                    }
+                    coverInput.value = "";
+                    coverPlaceholder.style.display = 'flex';
+                    coverPreview.style.display = 'none';
+                    coverPreviewImg.src = "";
                 }
             }
 
-            // --- DESCRIPTION CHARACTER COUNT ---
+            // Đếm ký tự description
             const descArea = document.getElementById('description');
             const descCount = document.getElementById('descCount');
             if (descArea && descCount) {
                 descArea.addEventListener('input', () => descCount.textContent = descArea.value.length);
                 descCount.textContent = descArea.value.length;
             }
-
-            // --- FORM SUBMIT WITH LOADING STATE ---
-            const uploadForm = document.getElementById('uploadForm');
-            const submitBtn = document.getElementById('submitBtn');
-
-            if (uploadForm && submitBtn) {
-                const originalBtnContent = submitBtn.innerHTML;
-
-                uploadForm.addEventListener('submit', function(e) {
-                    if (submitBtn.disabled) {
-                        e.preventDefault();
-                        return;
-                    }
-
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = `
-                <i class="fas fa-spinner fa-spin"></i>
-                <span>Uploading...</span>
-            `;
-                    submitBtn.classList.add('loading');
-                    showLoadingOverlay();
-
-                    // Auto-hide loading after 10 seconds (safety timeout)
-                    setTimeout(function() {
-                        const overlay = document.getElementById('uploadLoadingOverlay');
-                        if (overlay) {
-                            overlay.remove();
-                        }
-                    }, 5000);
-                });
-            }
-
-            function showLoadingOverlay() {
-                if (document.getElementById('uploadLoadingOverlay')) return;
-
-                const overlay = document.createElement('div');
-                overlay.id = 'uploadLoadingOverlay';
-                overlay.innerHTML = `
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <p class="loading-text">Uploading artist...</p>
-                <p class="loading-subtext">Please don't close this page</p>
-            </div>
-        `;
-                document.body.appendChild(overlay);
-            }
-
-            // Hide loading overlay when page loads (after redirect)
-            window.addEventListener('pageshow', function() {
-                const overlay = document.getElementById('uploadLoadingOverlay');
-                if (overlay) {
-                    overlay.remove();
-                }
-            });
         });
     </script>
-
-</div>
-
-<th:block layout:fragment="extra-css">
-
-</th:block>
-
-<th:block layout:fragment="extra-js">
-
 </th:block>
 </html>

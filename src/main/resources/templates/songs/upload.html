@@ -15,7 +15,6 @@
     <div class="upload-container">
         <form id="uploadForm"
               th:action="@{${song.songId != null ? '/songs/' + song.songId + '/edit' : '/songs/upload'}}"
-              hx-boost="false"
               method="post"
               enctype="multipart/form-data"
               th:object="${songRequest}"
@@ -117,9 +116,13 @@
                 </div>
             </div>
 
-        </form>
-    </div>
+        </form> </div>
 
+
+    </div>
+</div>
+
+<th:block layout:fragment="extra-css">
     <style>
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -526,88 +529,26 @@
                 order: -1;
             }
         }
-        /* Loading Overlay */
-        #uploadLoadingOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .loading-content {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(0, 206, 209, 0.2);
-            border-top-color: #00CED1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 0 20px rgba(0, 206, 209, 0.3);
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            font-size: 1.3rem;
-            color: #E0FFFF;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .loading-subtext {
-            font-size: 0.95rem;
-            color: rgba(224, 255, 255, 0.6);
-        }
-
-        /* Loading state for submit button */
-        .btn-submit.loading {
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-
-        .fa-spinner {
-            animation: spin 1s linear infinite;
-        }
     </style>
+</th:block>
 
+<th:block layout:fragment="extra-js">
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // --- 1. COVER IMAGE HANDLING ---
+            // --- 1. XỬ LÝ ẢNH BÌA (Preview only) ---
             const coverInput = document.getElementById('coverInput');
             const coverPlaceholder = document.getElementById('coverPlaceholder');
             const coverPreview = document.getElementById('coverPreview');
             const coverPreviewImg = document.getElementById('coverPreviewImg');
 
             if(coverInput) {
+                // Click div -> kích hoạt input file
                 const coverUploadArea = document.getElementById('coverUploadArea');
                 coverUploadArea.addEventListener('click', (e) => {
                     if (!e.target.closest('.btn-remove')) coverInput.click();
                 });
 
+                // Khi chọn file -> hiện preview
                 coverInput.addEventListener('change', function() {
                     const file = this.files[0];
                     if (file) {
@@ -621,24 +562,18 @@
                     }
                 });
 
-                // Reset cover with confirmation
+                // Nút X ảnh
                 window.resetCover = function() {
-                    // Check if there's actually an image to remove
-                    const hasImage = coverPreview.style.display !== 'none' || coverPreviewImg.src;
-
-                    if (hasImage) {
-                        // Show confirmation dialog
-                        if (confirm('Are you sure you want to remove this cover image?')) {
-                            coverInput.value = "";
-                            coverPlaceholder.style.display = 'flex';
-                            coverPreview.style.display = 'none';
-                            coverPreviewImg.src = "";
-                        }
-                    }
+                    coverInput.value = "";
+                    // Nếu đang edit (có ảnh cũ), có thể bạn muốn hiện lại ảnh cũ hoặc hiện placeholder
+                    // Ở đây mình cho hiện placeholder coi như xóa ảnh
+                    coverPlaceholder.style.display = 'flex';
+                    coverPreview.style.display = 'none';
+                    coverPreviewImg.src = "";
                 }
             }
 
-            // --- 2. AUDIO FILE HANDLING ---
+            // --- 2. XỬ LÝ AUDIO (Preview only) ---
             const songInput = document.getElementById('songInput');
             const songPlaceholder = document.getElementById('songPlaceholder');
             const songSuccess = document.getElementById('songSuccess');
@@ -657,99 +592,28 @@
                         songPlaceholder.style.display = 'none';
                         songSuccess.style.display = 'flex';
 
-                        // Hide old audio player if exists (new file hasn't been uploaded yet)
+                        // Ẩn player cũ nếu có (vì file mới chưa upload nên chưa nghe được)
                         const oldAudio = songSuccess.querySelector('audio');
                         if(oldAudio) oldAudio.style.display = 'none';
                     }
                 });
 
-                // Reset song with confirmation
                 window.resetSong = function() {
-                    // Check if there's actually a song to remove
-                    const hasSong = songSuccess.style.display !== 'none';
-
-                    if (hasSong) {
-                        // Show confirmation dialog
-                        if (confirm('Are you sure you want to remove this audio file?')) {
-                            songInput.value = "";
-                            songPlaceholder.style.display = 'flex';
-                            songSuccess.style.display = 'none';
-                            songFileName.textContent = "";
-                        }
-                    }
+                    songInput.value = "";
+                    songPlaceholder.style.display = 'flex';
+                    songSuccess.style.display = 'none';
+                    songFileName.textContent = "";
                 }
             }
 
-            // --- 3. LYRIC CHARACTER COUNT ---
+            // Đếm ký tự Lyric
             const lyricArea = document.getElementById('lyric');
             const lyricCount = document.getElementById('lyricCount');
             if(lyricArea && lyricCount) {
                 lyricArea.addEventListener('input', () => lyricCount.textContent = lyricArea.value.length);
                 lyricCount.textContent = lyricArea.value.length;
             }
-
-            // --- 4. FORM SUBMIT WITH LOADING STATE ---
-            const uploadForm = document.getElementById('uploadForm');
-            const submitBtn = document.getElementById('submitBtn');
-
-            if (uploadForm && submitBtn) {
-                // Store original button content
-                const originalBtnContent = submitBtn.innerHTML;
-
-                uploadForm.addEventListener('submit', function(e) {
-                    // Prevent double submission
-                    if (submitBtn.disabled) {
-                        e.preventDefault();
-                        return;
-                    }
-
-                    // Disable submit button
-                    submitBtn.disabled = true;
-
-                    // Change button to loading state
-                    submitBtn.innerHTML = `
-                <i class="fas fa-spinner fa-spin"></i>
-                <span>Uploading...</span>
-            `;
-
-                    // Add loading class for additional styling
-                    submitBtn.classList.add('loading');
-
-                    // Optional: Show loading overlay
-                    showLoadingOverlay();
-
-                    // Note: Form will submit normally, this just provides visual feedback
-                    // If form submission fails, you might want to re-enable the button
-                    // This would typically be handled by server response
-                });
-            }
-
-            // --- 5. LOADING OVERLAY FUNCTION ---
-            function showLoadingOverlay() {
-                // Check if overlay already exists
-                if (document.getElementById('uploadLoadingOverlay')) return;
-
-                const overlay = document.createElement('div');
-                overlay.id = 'uploadLoadingOverlay';
-                overlay.innerHTML = `
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <p class="loading-text">Uploading your song...</p>
-                <p class="loading-subtext">Please don't close this page</p>
-            </div>
-        `;
-                document.body.appendChild(overlay);
-            }
         });
     </script>
-</div>
-
-
-<th:block layout:fragment="extra-css">
-
-</th:block>
-
-<th:block layout:fragment="extra-js">
-
 </th:block>
 </html>
