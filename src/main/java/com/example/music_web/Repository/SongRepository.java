@@ -14,79 +14,38 @@ import java.util.Set;
 
 @Repository
 public interface SongRepository extends JpaRepository<Song, Long> {
-    // Tìm bài hát thuộc danh sách các thể loại (cho gợi ý)
-    @Query("SELECT DISTINCT s FROM Song s JOIN s.genres g WHERE g IN :genres")
-    List<Song> findByGenresIn(@Param("genres") Set<Genre> genres);
 
-    // Tìm 5 bài hát cùng thể loại (trừ bài hiện tại)
-    @Query("SELECT DISTINCT s FROM Song s JOIN s.genres g WHERE g IN :genres AND s.songId <> :currentSongId")
-    List<Song> findRelatedSongs(@Param("genres") List<Genre> genres, @Param("currentSongId") Long currentSongId, Pageable pageable);
+    // 1. Core Search: Tìm kiếm đa năng (Title, Artist, Album) + Lọc ẩn hiện + Lọc ngày
+    @Query("SELECT DISTINCT s FROM Song s " +
+            "LEFT JOIN s.artist a " +
+            "LEFT JOIN s.album al " +
+            "WHERE s.isHidden = false " +
+            "AND (:keyword IS NULL OR :keyword = '' OR " +
+            "LOWER(s.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(a.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(al.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:date IS NULL OR CAST(s.uploadDate AS LocalDate) = :date)")
+    List<Song> searchVisibleSongs(@Param("keyword") String keyword, @Param("date") LocalDate date);
 
-    // --- 1. LẤY TẤT CẢ BÀI HÁT ĐANG HIỆN (Cho Dashboard) ---
-    List<Song> findByIsHiddenFalse();
+    // 2. Tìm bài hát cùng thể loại (Cho tính năng Gợi ý / Related)
+    @Query("SELECT DISTINCT s FROM Song s JOIN s.genres g " +
+            "WHERE g IN :genres " +
+            "AND s.songId <> :currentSongId " +
+            "AND s.isHidden = false")
+    List<Song> findRelatedSongs(@Param("genres") java.util.Collection<Genre> genres,
+                                @Param("currentSongId") Long currentSongId,
+                                Pageable pageable);
 
-    // --- 2. GỢI Ý BÀI HÁT (Chỉ lấy bài chưa ẩn) ---
+    // 3. Tìm bài hát theo List Genres (Cho AI Recommendation)
     @Query("SELECT DISTINCT s FROM Song s JOIN s.genres g WHERE g IN :genres AND s.isHidden = false")
     List<Song> findByGenresInAndIsHiddenFalse(@Param("genres") Set<Genre> genres);
 
-    @Query("SELECT s FROM Song s " +
-            "WHERE " +
-            // 1. Tìm theo từ khóa (Tên bài HOẶC Tên ca sĩ)
-            "(:keyword IS NULL OR :keyword = '' OR " +
-            "LOWER(s.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(s.artist.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND " +
-            // 2. Tìm theo ngày đăng (So sánh phần ngày của uploadDate)
-            "(:date IS NULL OR CAST(s.uploadDate AS LocalDate) = :date)")
-    List<Song> searchSongs(@Param("keyword") String keyword, @Param("date") LocalDate date);
+    // 4. Lấy tất cả bài hát đang hiện (Cho Dashboard)
+    List<Song> findByIsHiddenFalse();
 
-    // --- 3. TÌM KIẾM CHO USER (Chỉ tìm bài chưa ẩn) ---
-    // Copy logic của searchSongs nhưng thêm điều kiện: AND s.isHidden = false
-    @Query("SELECT s FROM Song s " +
-            "WHERE " +
-            "s.isHidden = false " + // <--- QUAN TRỌNG: Chỉ lấy bài hiện
-            "AND " +
-            "(:keyword IS NULL OR :keyword = '' OR " +
-            "LOWER(s.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(s.artist.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND " +
-            "(:date IS NULL OR CAST(s.uploadDate AS LocalDate) = :date)")
-    List<Song> searchVisibleSongs(@Param("keyword") String keyword, @Param("date") LocalDate date);
-
-
-    // --- CẬP NHẬT MỚI: TÌM KIẾM ĐA NĂNG ---
-    // Sử dụng @Query để join bảng Artist và Album
-    // LOWER() để tìm kiếm không phân biệt hoa thường
-    @Query("SELECT s FROM Song s " +
-            "LEFT JOIN s.artist a " +
-            "LEFT JOIN s.album al " +
-            "WHERE (LOWER(s.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(a.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(al.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND s.isHidden = false")
-    List<Song> searchComplex(@Param("keyword") String keyword);
-
-    // Tìm bài hát theo thời lượng
-    List<Song> findByDurationBetween(Integer minDuration, Integer maxDuration);
-
-    // Tìm bài hát theo BPM
-    List<Song> findByBpmBetween(Integer minBpm, Integer maxBpm);
-
-    // Tìm bài hát theo mức năng lượng
-    List<Song> findByEnergyLevelGreaterThanEqual(Integer minEnergy);
-
-    // Tìm bài hát theo năm phát hành
-    List<Song> findByReleaseYear(Integer releaseYear);
-    List<Song> findByReleaseYearBetween(Integer startYear, Integer endYear);
-
-    // Tìm bài hát theo ngôn ngữ
-    List<Song> findByLanguage(String language);
-
-    // Tìm bài hát không explicit
-    List<Song> findByExplicitFalse();
-
-    // Query phức tạp: tìm bài hát phù hợp cho hoạt động
+    // 5. Query phục vụ AI lọc nâng cao (Các tiêu chí BPM, Energy...)
     @Query("SELECT s FROM Song s WHERE " +
+            "s.isHidden = false AND " +
             "(:minBpm IS NULL OR s.bpm >= :minBpm) AND " +
             "(:maxBpm IS NULL OR s.bpm <= :maxBpm) AND " +
             "(:minEnergy IS NULL OR s.energyLevel >= :minEnergy) AND " +

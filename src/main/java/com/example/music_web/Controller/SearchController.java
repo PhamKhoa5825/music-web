@@ -26,7 +26,7 @@ public class SearchController {
         // 1. Tìm bài hát (Theo tên, Tên ca sĩ, Album)
         // Lưu ý: Cần viết Query trong Repository hoặc dùng findByTitleContaining v.v.
         // Ở đây giả định dùng method custom hoặc JPA cơ bản
-        List<Song> songs = songRepository.searchComplex(keyword);
+        List<Song> songs = songRepository.searchVisibleSongs(keyword, null);
 
         // 2. Tìm Playlist công khai
         List<Playlist> playlists = playlistRepository.findByNameContainingAndIsPublicTrue(keyword);

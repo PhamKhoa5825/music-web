@@ -92,7 +92,7 @@ public class AdminDashboardController {
             @RequestParam(required = false) LocalDate date
     ) {
         // Gọi hàm tìm kiếm vừa viết ở Repo
-        List<Song> songs = songRepo.searchSongs(keyword, date);
+        List<Song> songs = songRepo.searchVisibleSongs(keyword, date);
 
         model.addAttribute("songs", songs);
         model.addAttribute("keyword", keyword);

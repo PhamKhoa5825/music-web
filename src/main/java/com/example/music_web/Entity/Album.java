@@ -33,6 +33,7 @@ public class Album {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "artist_id")
     @ToString.Exclude
+    @JsonIgnore
     private Artist artist; // Album thuộc về một Artist
 
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL)
