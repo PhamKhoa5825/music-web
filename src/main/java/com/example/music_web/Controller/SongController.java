@@ -45,7 +45,8 @@ public class SongController {
             @RequestParam(defaultValue = "10") int size,
             Model model
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("uploadDate")));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("uploadDate"),
+                                                                Sort.Order.asc("songId")));
         // 1. Lấy danh sách bài hát đã lọc
         model.addAttribute("songs", songService.getAllSongs(title, artistId, albumId, genreId, pageable));
 
@@ -108,11 +109,16 @@ public class SongController {
             RedirectAttributes redirectAttributes,
             Model model
     ) {
+        if (request.getFilePath() == null || request.getFilePath().isEmpty()) {
+            bindingResult.rejectValue("filePath", "error.filePath", "File audio is required!");
+        }
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("artists", artistRepo.findAll());
             model.addAttribute("albums", albumRepo.findAll());
             model.addAttribute("genres", genreRepo.findAll());
             model.addAttribute("isEdit", false);
+            model.addAttribute("song", new SongResponse());
             return "songs/upload";
         }
 
@@ -170,6 +176,10 @@ public class SongController {
             RedirectAttributes redirectAttributes,
             Model model
     ) {
+        if (request.getFilePath() == null || request.getFilePath().isEmpty()) {
+            bindingResult.rejectValue("filePath", "error.filePath", "File audio is required!");
+        }
+
         if (bindingResult.hasErrors()) {
             SongResponse song = songService.getSongById(songId);
             model.addAttribute("song", song);

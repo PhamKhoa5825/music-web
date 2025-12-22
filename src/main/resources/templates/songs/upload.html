@@ -93,8 +93,12 @@
                         <h3>Audio File</h3>
                     </div>
                     <div class="upload-area" id="songUploadArea">
-                        <input type="file" th:field="*{filePath}" id="songInput" accept="audio/*" hidden>
-
+                        <input type="file"
+                               th:field="*{filePath}"
+                               id="songInput"
+                               accept="audio/*"
+                               style="opacity: 0; position: absolute; z-index: -1; width: 1px; height: 1px; top: 50%; left: 50%;"
+                               th:required="${song.songId == null}">
                         <div class="upload-placeholder" id="songPlaceholder"
                              th:style="${song.musicUrl != null} ? 'display: none;' : 'display: flex;'">
                             <i class="fas fa-file-audio"></i>
@@ -104,7 +108,7 @@
                         <div class="upload-success" id="songSuccess"
                              th:style="${song.musicUrl != null} ? 'display: flex;' : 'display: none;'">
                             <i class="fas fa-check-circle"></i>
-                            <div style="flex: 1; margin-left: 10px;">
+                            <div class="song-info">
                                 <p id="songFileName" th:text="${song.musicUrl != null ? 'Current Audio File Exists' : ''}"></p>
                                 <audio th:if="${song.musicUrl}" controls th:src="${song.musicUrl}" style="width: 100%; height: 30px;"></audio>
                             </div>
@@ -116,14 +120,23 @@
                 </div>
             </div>
 
-        </form> </div>
-
-
+        </form>
     </div>
+
 </div>
 
 <th:block layout:fragment="extra-css">
     <style>
+        /* 1. Ẩn thanh music player */
+        #musicPlayer {
+            display: none !important;
+        }
+
+        /* 2. Xóa khoảng trống thừa dưới chân trang (do layout gốc để chừa chỗ cho player) */
+        body {
+            padding-bottom: 0 !important;
+        }
+
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background-color: #050505;
@@ -372,9 +385,24 @@
             justify-content: center;
             height: 200px;
             gap: 1rem;
+            position: relative;
+            text-align: center;
         }
 
-        .upload-success i {
+        .song-info {
+            width: 100%;           /* Chiếm chiều rộng để player đẹp hơn */
+            display: flex;
+            flex-direction: column;
+            align-items: center;   /* Căn giữa player và tên bài hát */
+            gap: 10px;             /* Khoảng cách giữa tên file và player */
+        }
+
+        .upload-success audio {
+            width: 80% !important; /* Player chiếm 80% khung */
+            height: 30px;
+        }
+
+        .upload-success > i {
             font-size: 3rem;
             color: #00CED1;
             filter: drop-shadow(0 0 10px rgba(0, 206, 209, 0.6));
@@ -414,77 +442,9 @@
             box-shadow: 0 4px 15px rgba(255, 107, 107, 0.5);
         }
 
-        /* Progress Bar */
-        .upload-progress {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 200px;
-            gap: 1rem;
-            padding: 2rem;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00CED1 0%, #00E5E8 100%);
-            border-radius: 10px;
-            transition: width 0.3s ease;
-            box-shadow: 0 0 15px rgba(0, 206, 209, 0.6);
-            position: relative;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(
-                    90deg,
-                    transparent,
-                    rgba(255, 255, 255, 0.3),
-                    transparent
-            );
-            animation: shimmer 1.5s infinite;
-        }
-
         @keyframes shimmer {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(100%); }
-        }
-
-        .progress-text {
-            font-size: 0.9rem;
-            color: #00CED1;
-            font-weight: 600;
-            text-shadow: 0 0 8px rgba(0, 206, 209, 0.4);
-        }
-
-        /* Upload Status */
-        .upload-status {
-            margin-top: 0.75rem;
-            font-size: 0.85rem;
-            text-align: center;
-            min-height: 20px;
-        }
-
-        .upload-status.success {
-            color: #00CED1;
-        }
-
-        .upload-status.error {
-            color: #ff6b6b;
         }
 
         /* Submit Button */
@@ -529,6 +489,7 @@
                 order: -1;
             }
         }
+
     </style>
 </th:block>
 
@@ -614,6 +575,30 @@
                 lyricCount.textContent = lyricArea.value.length;
             }
         });
+
+        // --- 3. XỬ LÝ GIỚI HẠN GENRE (Max 3) ---
+        const genreSelect = document.getElementById('genreId');
+        if (genreSelect) {
+            // Lưu lại trạng thái những mục đã chọn trước đó
+            let lastValidSelection = Array.from(genreSelect.selectedOptions).map(opt => opt.value);
+
+            genreSelect.addEventListener('change', function() {
+                // Đếm số lượng đang chọn
+                const selectedOptions = Array.from(this.selectedOptions);
+
+                if (selectedOptions.length > 3) {
+                    alert("Bạn chỉ được chọn tối đa 3 thể loại!");
+
+                    // Khôi phục lại trạng thái cũ (bỏ chọn cái vừa click)
+                    Array.from(this.options).forEach(opt => {
+                        opt.selected = lastValidSelection.includes(opt.value);
+                    });
+                } else {
+                    // Nếu hợp lệ (<= 3), cập nhật lại danh sách hợp lệ
+                    lastValidSelection = selectedOptions.map(opt => opt.value);
+                }
+            });
+        }
     </script>
 </th:block>
 </html>

@@ -103,6 +103,10 @@ public class SongService {
             song.setCoverImage(response.getUrl());
         }
 
+        if (request.getFilePath().isEmpty()) {
+            throw new RuntimeException("File audio cannot empty!");
+        }
+
         return songMapper.toSongResponse(songRepo.save(song));
     }
 
@@ -110,18 +114,17 @@ public class SongService {
         Song song = songRepo.findById(songId)
                 .orElseThrow(() -> new AppException(ErrorCode.SONG_NOT_EXISTED));
         songMapper.updateSong(song, request);
-        if (request.getAlbumId() == -1) { // go khoi album
+        if (request.getAlbumId() == null || request.getAlbumId() == -1) {
             song.setAlbum(null);
         }
-            Artist artist = artistRepo.findById(request.getArtistId())
-                    .orElseThrow(() -> new AppException(ErrorCode.ARTIST_NOT_EXISTED));
-            song.setArtist(artist);
-
-        if (request.getAlbumId() != null) {
+        else {
             Album album = albumRepo.findById(request.getAlbumId())
                     .orElseThrow(() -> new AppException(ErrorCode.ALBUM_NOT_EXISTED));
             song.setAlbum(album);
         }
+            Artist artist = artistRepo.findById(request.getArtistId())
+                    .orElseThrow(() -> new AppException(ErrorCode.ARTIST_NOT_EXISTED));
+            song.setArtist(artist);
 
         List<Genre> genre = genreRepo.findAllById(request.getGenreId());
         song.setGenres(genre);
