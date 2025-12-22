@@ -56,5 +56,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiResponse);
     }
 
+
+    @ExceptionHandler(value = AppException.class)
+    ResponseEntity<ApiResponse> handlingAppException(AppException exception) {
+        ApiResponse apiResponse = new ApiResponse();
+        ErrorCode errorCode = exception.getErrorCode();
+
+        apiResponse.setCode(errorCode.getCode());
+        apiResponse.setMessage(exception.getMessage());
+        return ResponseEntity.badRequest().body(apiResponse);
+    }
+
     // Bạn có thể thêm các Exception khác tùy chỉnh tại đây
 }

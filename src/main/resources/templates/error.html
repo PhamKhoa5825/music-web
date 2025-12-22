@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Có lỗi xảy ra</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .error-container { background: #ffe6e6; border: 1px solid #ffcccc; padding: 20px; border-radius: 5px; }
+        h1 { color: #cc0000; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+<div class="error-container">
+    <h1>Opps! Đã có lỗi xảy ra</h1>
+    <p><strong>Trạng thái:</strong> <span th:text="${status}">500</span></p>
+    <p><strong>Lỗi:</strong> <span th:text="${error}">Internal Server Error</span></p>
+
+    <p><strong>Thông điệp:</strong> <span th:text="${message}">No message available</span></p>
+
+    <div th:if="${trace}">
+        <h3>Chi tiết kỹ thuật:</h3>
+        <pre th:text="${trace}"></pre>
+    </div>
+
+    <br>
+    <a href="/">Quay về trang chủ</a>
+</div>
+</body>
+</html>

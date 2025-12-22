@@ -19,7 +19,8 @@ public class SongRanking {
 
     private LocalDate rankingDate;
 
-    @Column(nullable = false)
+    // Đổi tên cột trong Database thành "ranking_position" để tránh trùng từ khóa
+    @Column(name = "ranking_position", nullable = false)
     private Integer rank;
 
     private Integer totalViews; // Số lượt xem trong ngày/chu kỳ này

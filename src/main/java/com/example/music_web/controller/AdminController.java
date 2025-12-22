@@ -21,7 +21,7 @@ public class AdminController {
     public String showDashboard(Model model) {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("logs", logRepository.findAllByOrderByTimeDesc());
-        return "admin";
+        return "admin/dashboard";
     }
 
     // Xử lý Khóa/Mở khóa
@@ -37,4 +37,6 @@ public class AdminController {
         userService.deleteUser(id, admin);
         return "redirect:/admin/dashboard?message=UserDeleted";
     }
+
+
 }

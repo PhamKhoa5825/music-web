@@ -1,11 +1,16 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.*; // Thêm Lombok để code gọn hơn
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "songs")
+@Data // Thêm @Data để tự sinh Getter/Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Song {
 
     @Id
@@ -15,11 +20,15 @@ public class Song {
     @Column(nullable = false)
     private String title;
 
+    // --- THÊM TRƯỜNG LỜI BÀI HÁT (MỚI) ---
+    @Column(columnDefinition = "TEXT") // Dùng TEXT để lưu lời bài hát dài
+    private String lyric;
+    // -------------------------------------
+
     @ManyToOne
     @JoinColumn(name = "artist_id")
     private Artist artist;
 
-    // Quan hệ Many-to-Many cho Genre (Một bài hát có thể có nhiều thể loại)
     @ManyToMany
     @JoinTable(
             name = "song_genres",
@@ -29,116 +38,20 @@ public class Song {
     private List<Genre> genres;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "album_id") // Thêm Album vào Song
+    @JoinColumn(name = "album_id")
     private Album album;
 
-    private String filePath;
-    private String coverImage;
+    private String filePath;   // Link file nhạc (Cloudinary)
+    private String coverImage; // Link ảnh bìa (Cloudinary)
 
     @Column(nullable = false)
     private Integer views = 0;
 
     private LocalDateTime uploadDate = LocalDateTime.now();
 
-    // Các trường phục vụ AI từ Set 1
+    // Các trường AI cũ
     private Double averageRating;
     private Integer totalRatings;
-    private String audioFeatures; // JSON/TEXT
-
-    public Long getSongId() {
-        return songId;
-    }
-
-    public void setSongId(Long songId) {
-        this.songId = songId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public Artist getArtist() {
-        return artist;
-    }
-
-    public void setArtist(Artist artist) {
-        this.artist = artist;
-    }
-
-    public List<Genre> getGenres() {
-        return genres;
-    }
-
-    public void setGenres(List<Genre> genres) {
-        this.genres = genres;
-    }
-
-    public Album getAlbum() {
-        return album;
-    }
-
-    public void setAlbum(Album album) {
-        this.album = album;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public String getCoverImage() {
-        return coverImage;
-    }
-
-    public void setCoverImage(String coverImage) {
-        this.coverImage = coverImage;
-    }
-
-    public LocalDateTime getUploadDate() {
-        return uploadDate;
-    }
-
-    public void setUploadDate(LocalDateTime uploadDate) {
-        this.uploadDate = uploadDate;
-    }
-
-    public Integer getViews() {
-        return views;
-    }
-
-    public void setViews(Integer views) {
-        this.views = views;
-    }
-
-    public Double getAverageRating() {
-        return averageRating;
-    }
-
-    public void setAverageRating(Double averageRating) {
-        this.averageRating = averageRating;
-    }
-
-    public Integer getTotalRatings() {
-        return totalRatings;
-    }
-
-    public void setTotalRatings(Integer totalRatings) {
-        this.totalRatings = totalRatings;
-    }
-
-    public String getAudioFeatures() {
-        return audioFeatures;
-    }
-
-    public void setAudioFeatures(String audioFeatures) {
-        this.audioFeatures = audioFeatures;
-    }
+    private String audioFeatures;
 }
 

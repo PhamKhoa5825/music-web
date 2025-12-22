@@ -1,9 +1,11 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
 @Table(name = "genres")
+@Data
 public class Genre {
 
     @Id
@@ -12,21 +14,5 @@ public class Genre {
 
     @Column(nullable = false)
     private String name;
-
-    public Long getGenreId() {
-        return genreId;
-    }
-
-    public void setGenreId(Long genreId) {
-        this.genreId = genreId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+    private String coverImage;
 }
-

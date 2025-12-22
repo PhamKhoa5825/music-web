@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title th:text="${isEdit} ? 'Edit Artist' : 'Upload Artist'">Upload Artist</title>
+</head>
+
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1>
+            <i th:class="${isEdit} ? 'fas fa-edit' : 'fas fa-upload'"></i>
+            <span th:text="${isEdit} ? 'Edit Artist' : 'Upload New Artist'">Upload New Artist</span>
+        </h1>
+    </div>
+
+    <div class="upload-container">
+        <form id="uploadForm"
+              th:action="@{${isEdit ? '/artists/' + artistId + '/edit' : '/artists/upload'}}"
+              hx-boost="false"
+              method="post"
+              enctype="multipart/form-data"
+              th:object="${artistRequest}"
+              style="display: contents;">
+
+            <div class="form-section-full">
+                <div class="form-group">
+                    <label for="name"><i class="fas fa-user"></i> Artist Name *</label>
+                    <input type="text" id="name" th:field="*{name}" class="form-input" placeholder="Enter artist name..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description"><i class="fas fa-align-left"></i> Description (Optional)</label>
+                    <textarea id="description" th:field="*{description}" class="form-textarea" rows="6"></textarea>
+                    <small class="form-hint"><span id="descCount">0</span> characters</small>
+                </div>
+
+                <div class="upload-card">
+                    <div class="upload-card-header">
+                        <i class="fas fa-image"></i>
+                        <h3>Artist Cover Image</h3>
+                    </div>
+
+                    <div class="upload-area" id="coverUploadArea">
+                        <input type="file" th:field="*{coverImage}" id="coverInput" accept="image/*" hidden>
+
+                        <div class="upload-placeholder" id="coverPlaceholder"
+                             th:style="${artist != null && artist.coverImage != null} ? 'display: none;' : 'display: flex;'">
+                            <i class="fas fa-image"></i>
+                            <p>Click or drag image here</p>
+                            <small>JPEG, PNG, WEBP (Max 10MB)</small>
+                        </div>
+
+                        <div class="upload-preview" id="coverPreview"
+                             th:style="${artist != null && artist.coverImage != null} ? 'display: flex;' : 'display: none;'">
+                            <img id="coverPreviewImg"
+                                 th:src="${artist != null} ? ${artist.coverImage} : ''"
+                                 alt="Cover Preview">
+                            <button type="button" class="btn-remove" onclick="resetCover()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn btn-submit">
+                    <i th:class="${isEdit} ? 'fas fa-save' : 'fas fa-upload'"></i>
+                    <span th:text="${isEdit} ? 'Save Changes' : 'Upload Artist'">Upload Artist</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <style>
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #050505;
+            background-image:
+                    radial-gradient(at 0% 0%, rgba(1, 109, 110, 0.3) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, rgba(1, 60, 60, 0.5) 0px, transparent 50%),
+                    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.02) 0px, transparent 50%);
+            background-attachment: fixed;
+            background-size: 100% 100%;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            color: #E0FFFF;
+            font-weight: 1000;
+            text-shadow: 0 2px 10px rgba(224, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-header i {
+            filter: drop-shadow(0 0 8px rgba(224, 255, 255, 0.6));
+        }
+
+        .upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-section-full {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(224, 255, 255, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #E0FFFF;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group label i {
+            color: #00CED1;
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            border-radius: 12px;
+            color: #E0FFFF;
+            font-size: 0.95rem;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #00CED1;
+            background: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 0 0 3px rgba(0, 206, 209, 0.1);
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+            color: rgba(224, 255, 255, 0.4);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+            line-height: 1.6;
+        }
+
+        .form-hint {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: rgba(224, 255, 255, 0.5);
+        }
+
+        .upload-card {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(224, 255, 255, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-card-header i {
+            font-size: 1.5rem;
+            color: #00CED1;
+            filter: drop-shadow(0 0 8px rgba(0, 206, 209, 0.5));
+        }
+
+        .upload-card-header h3 {
+            font-size: 1.2rem;
+            color: #E0FFFF;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .upload-area {
+            position: relative;
+            min-height: 250px;
+            border: 2px dashed rgba(0, 206, 209, 0.3);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #00CED1;
+            background: rgba(0, 206, 209, 0.05);
+        }
+
+        .upload-area.drag-over {
+            border-color: #00CED1;
+            background: rgba(0, 206, 209, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-placeholder:hover {
+            transform: translateY(-5px);
+        }
+
+        .upload-placeholder i {
+            font-size: 4rem;
+            color: #00CED1;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 10px rgba(0, 206, 209, 0.4));
+        }
+
+        .upload-placeholder p {
+            font-size: 1rem;
+            color: #E0FFFF;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .upload-placeholder small {
+            font-size: 0.85rem;
+            color: rgba(224, 255, 255, 0.5);
+        }
+
+        .upload-preview {
+            position: relative;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .upload-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-remove {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 107, 107, 0.9);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .btn-remove:hover {
+            background: #ff5252;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.5);
+        }
+
+        .upload-progress {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            gap: 1rem;
+            padding: 2rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00CED1 0%, #00E5E8 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 206, 209, 0.6);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #00CED1;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(0, 206, 209, 0.4);
+        }
+
+        .upload-status {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .upload-status.success {
+            color: #00CED1;
+        }
+
+        .upload-status.error {
+            color: #ff6b6b;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #00CED1 0%, #00E5E8 100%);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(0, 206, 209, 0.3);
+        }
+
+        .btn-submit:not(:disabled):hover {
+            background: linear-gradient(135deg, #00E5E8 0%, #00CED1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 206, 209, 0.5);
+        }
+
+        .btn-submit:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(224, 255, 255, 0.3);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        /* Loading Overlay */
+        #uploadLoadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .loading-content {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 206, 209, 0.2);
+            border-top-color: #00CED1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 0 20px rgba(0, 206, 209, 0.3);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.3rem;
+            color: #E0FFFF;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-subtext {
+            font-size: 0.95rem;
+            color: rgba(224, 255, 255, 0.6);
+        }
+
+        /* Loading state for submit button */
+        .btn-submit.loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // --- COVER IMAGE HANDLING ---
+            const coverInput = document.getElementById('coverInput');
+            const coverPlaceholder = document.getElementById('coverPlaceholder');
+            const coverPreview = document.getElementById('coverPreview');
+            const coverPreviewImg = document.getElementById('coverPreviewImg');
+            const uploadArea = document.getElementById('coverUploadArea');
+
+            if (coverInput) {
+                uploadArea.addEventListener('click', (e) => {
+                    if (!e.target.closest('.btn-remove')) coverInput.click();
+                });
+
+                coverInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            coverPreviewImg.src = e.target.result;
+                            coverPlaceholder.style.display = 'none';
+                            coverPreview.style.display = 'flex';
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // Reset cover with confirmation
+                window.resetCover = function() {
+                    const hasImage = coverPreview.style.display !== 'none' || coverPreviewImg.src;
+
+                    if (hasImage) {
+                        if (confirm('Are you sure you want to remove this cover image?')) {
+                            coverInput.value = "";
+                            coverPlaceholder.style.display = 'flex';
+                            coverPreview.style.display = 'none';
+                            coverPreviewImg.src = "";
+                        }
+                    }
+                }
+            }
+
+            // --- DESCRIPTION CHARACTER COUNT ---
+            const descArea = document.getElementById('description');
+            const descCount = document.getElementById('descCount');
+            if (descArea && descCount) {
+                descArea.addEventListener('input', () => descCount.textContent = descArea.value.length);
+                descCount.textContent = descArea.value.length;
+            }
+
+            // --- FORM SUBMIT WITH LOADING STATE ---
+            const uploadForm = document.getElementById('uploadForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (uploadForm && submitBtn) {
+                const originalBtnContent = submitBtn.innerHTML;
+
+                uploadForm.addEventListener('submit', function(e) {
+                    if (submitBtn.disabled) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Uploading...</span>
+            `;
+                    submitBtn.classList.add('loading');
+                    showLoadingOverlay();
+
+                    // Auto-hide loading after 10 seconds (safety timeout)
+                    setTimeout(function() {
+                        const overlay = document.getElementById('uploadLoadingOverlay');
+                        if (overlay) {
+                            overlay.remove();
+                        }
+                    }, 5000);
+                });
+            }
+
+            function showLoadingOverlay() {
+                if (document.getElementById('uploadLoadingOverlay')) return;
+
+                const overlay = document.createElement('div');
+                overlay.id = 'uploadLoadingOverlay';
+                overlay.innerHTML = `
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Uploading artist...</p>
+                <p class="loading-subtext">Please don't close this page</p>
+            </div>
+        `;
+                document.body.appendChild(overlay);
+            }
+
+            // Hide loading overlay when page loads (after redirect)
+            window.addEventListener('pageshow', function() {
+                const overlay = document.getElementById('uploadLoadingOverlay');
+                if (overlay) {
+                    overlay.remove();
+                }
+            });
+        });
+    </script>
+
+</div>
+
+<th:block layout:fragment="extra-css">
+
+</th:block>
+
+<th:block layout:fragment="extra-js">
+
+</th:block>
+</html>

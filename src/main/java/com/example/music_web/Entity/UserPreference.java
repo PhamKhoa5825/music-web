@@ -1,9 +1,10 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.util.List;
-
+@Data
 @Entity
 public class UserPreference {
     @Id
@@ -25,43 +26,5 @@ public class UserPreference {
     @Column(columnDefinition = "JSON") // hoặc TEXT
     private String listeningPattern; // thời gian nghe, tần suất
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public List<Genre> getFavoriteGenres() {
-        return favoriteGenres;
-    }
-
-    public void setFavoriteGenres(List<Genre> favoriteGenres) {
-        this.favoriteGenres = favoriteGenres;
-    }
-
-    public List<Artist> getFavoriteArtists() {
-        return favoriteArtists;
-    }
-
-    public void setFavoriteArtists(List<Artist> favoriteArtists) {
-        this.favoriteArtists = favoriteArtists;
-    }
-
-    public String getListeningPattern() {
-        return listeningPattern;
-    }
-
-    public void setListeningPattern(String listeningPattern) {
-        this.listeningPattern = listeningPattern;
-    }
 }
