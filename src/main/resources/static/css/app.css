@@ -1,0 +1,42 @@
+/* AI DJ Button Styling */
+.ai-dj-btn {
+    /* Màu nền tối pha chút gradient nhẹ */
+    background: linear-gradient(90deg, #1e1e1e, #0f0f0f);
+    border: 1px solid #333;
+
+    /* Chữ màu xanh Neon nổi bật */
+    color: #00f3ff !important;
+    font-weight: 700;
+
+    /* Bo tròn hình viên thuốc */
+    border-radius: 50px !important;
+
+    /* Căn chỉnh lề */
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    padding-left: 20px !important;
+
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Hiệu ứng khi di chuột vào */
+.ai-dj-btn:hover {
+    /* Đổi nền sang màu Neon rực rỡ */
+    background: linear-gradient(90deg, #00f3ff, #00ff9d);
+
+    /* Chữ chuyển thành màu đen để dễ đọc */
+    color: black !important;
+    border-color: transparent;
+
+    /* Hiệu ứng phát sáng */
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+    transform: scale(1.02) translateY(-1px);
+}
+
+/* Đảm bảo icon đổi màu theo chữ */
+.ai-dj-btn i {
+    color: inherit !important;
+    transition: none;
+}

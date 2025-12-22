@@ -15,6 +15,7 @@ import java.util.List;
 @Repository
 public interface ListeningHistoryRepository extends JpaRepository<ListeningHistory, Long> {
     List<ListeningHistory> findByUserOrderByListenedAtDesc(User user);
+    List<ListeningHistory> findTop50ByUser_UserIdOrderByListenedAtDesc(Long userId);
 
     // 1. Thống kê theo KHUNG GIỜ (0h - 23h)
     // Nếu genreId null thì lấy tất cả, nếu có thì lọc theo genre

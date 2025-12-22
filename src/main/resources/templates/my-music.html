@@ -47,6 +47,23 @@
             padding: 5px 12px; border-radius: 20px; text-decoration: none; transition: 0.3s;
         }
         .btn-admin-access:hover { background: #ffc107; color: black; }
+
+        /* Thêm vào phần <style> của my-music.html */
+        .analysis-content table {
+            width: 100%;
+            color: white;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        .analysis-content th, .analysis-content td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+        .analysis-content th {
+            background-color: #333;
+            color: #0dcaf0; /* Màu cyan neon */
+        }
     </style>
 </head>
 <body>
@@ -66,6 +83,16 @@
     <div th:replace="~{fragments/tab-content :: tab-playlists}"></div>
 
     <div th:replace="~{fragments/tab-content :: tab-ai-result}"></div>
+
+    <div class="nav-link cursor-pointer" onclick="openAiDjModal()">
+        <i class="bi bi-robot text-info"></i> AI DJ
+    </div>
+    <div class="nav-link cursor-pointer" onclick="openAdvancedAiModal()">
+        <i class="bi bi-stars text-warning"></i> AI Nâng Cao
+    </div>
+    <div class="nav-link cursor-pointer" onclick="analyzeMyHabits()">
+        <i class="bi bi-person-lines-fill text-danger"></i> Gu Âm Nhạc
+    </div>
     <div id="view-song-detail" class="content-view d-none">
     </div>
 </div>
@@ -313,6 +340,283 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================
+     THÊM CÁC MODAL SAU VÀO CUỐI my-music.html (TRƯỚC </body>)
+     ============================================ -->
+
+<!-- 1. AI DJ MODAL (Đơn giản) -->
+<div class="modal fade" id="aiDjModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-info">
+            <div class="modal-header border-info bg-info bg-opacity-10">
+                <h5 class="modal-title text-info fw-bold">
+                    <i class="bi bi-robot me-2"></i>AI DJ - Tạo Playlist Theo Tâm Trạng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Bạn đang cảm thấy thế nào?</label>
+                    <textarea
+                            id="ai-mood-input"
+                            class="form-control bg-black text-white border-secondary"
+                            rows="4"
+                            placeholder="VD: Tôi đang vui vẻ và muốn nghe nhạc EDM sôi động để tập gym..."></textarea>
+                    <small class="text-white-50 d-block mt-2">
+                        💡 Mẹo: Càng mô tả chi tiết, AI càng hiểu rõ sở thích của bạn!
+                    </small>
+                </div>
+
+                <div id="ai-dj-loading" class="d-none text-center py-3">
+                    <div class="spinner-border text-info"></div>
+                    <p class="text-white-50 mt-2">AI đang chọn nhạc cho bạn...</p>
+                </div>
+
+                <div class="alert alert-info border-info bg-dark mt-3">
+                    <small>
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Ví dụ:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Tôi muốn thư giãn sau giờ làm việc</li>
+                            <li>Cần nhạc tập trung để học bài</li>
+                            <li>Muốn nhảy nhót trong bữa tiệc tối nay</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer border-info">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-info fw-bold px-4" onclick="submitAiDj()">
+                    <i class="bi bi-stars me-2"></i>Tạo Playlist
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. AI CHAT ASSISTANT BUTTON (Floating) -->
+<button
+        class="btn btn-info rounded-circle position-fixed shadow-lg"
+        style="bottom: 120px; right: 30px; width: 60px; height: 60px; z-index: 1000;"
+        onclick="openAiChatAssistant()"
+        title="AI Trợ lý">
+    <i class="bi bi-robot fs-4"></i>
+</button>
+
+<!-- 3. UPDATE TAB AI RESULT (Trong view-ai-result) -->
+<div id="view-ai-result" class="content-view d-none">
+    <div class="container-fluid py-4 px-5">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-info">
+                    <i class="bi bi-stars me-2"></i>Kết Quả AI DJ
+                </h2>
+                <p class="text-white-50">Playlist được AI tạo riêng cho bạn</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-info" onclick="exportPlaylist()">
+                    <i class="bi bi-download me-2"></i>Xuất File
+                </button>
+                <button class="btn btn-success" onclick="saveAsPlaylist()">
+                    <i class="bi bi-plus-circle me-2"></i>Lưu Playlist
+                </button>
+            </div>
+        </div>
+
+        <!-- User Request Display -->
+        <div id="ai-user-mood-display" class="mb-4">
+            <!-- Dynamic content -->
+        </div>
+
+        <!-- AI Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card bg-dark border-info">
+                    <div class="card-body text-center">
+                        <i class="bi bi-music-note-list fs-1 text-info"></i>
+                        <h4 class="mt-2 mb-0 fw-bold" id="ai-song-count">0</h4>
+                        <small class="text-white-50">Bài hát</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock fs-1 text-success"></i>
+                        <h4 class="mt-2 mb-0 fw-bold" id="ai-duration">0</h4>
+                        <small class="text-white-50">Phút</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-warning">
+                    <div class="card-body text-center">
+                        <i class="bi bi-star-fill fs-1 text-warning"></i>
+                        <h4 class="mt-2 mb-0 fw-bold" id="ai-avg-rating">0</h4>
+                        <small class="text-white-50">Rating TB</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-primary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-lightning-charge fs-1 text-primary"></i>
+                        <h4 class="mt-2 mb-0 fw-bold">AI</h4>
+                        <small class="text-white-50">Powered</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Song List -->
+        <h5 class="fw-bold mb-3 text-white">
+            <i class="bi bi-collection-play me-2"></i>Danh Sách Bài Hát
+        </h5>
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-4" id="ai-result-list">
+            <!-- Dynamic songs grid -->
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-5 text-center">
+            <button class="btn btn-outline-light me-2" onclick="switchView('home')">
+                <i class="bi bi-house me-2"></i>Về Trang Chủ
+            </button>
+            <button class="btn btn-info" onclick="openAdvancedAiModal()">
+                <i class="bi bi-gear me-2"></i>Tạo Playlist Nâng Cao
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="comparisonModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-white border-info">
+            <div class="modal-header border-info">
+                <h5 class="modal-title text-info">
+                    <i class="bi bi-stars me-2"></i>Kết quả phân tích AI
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="comparisonContent">
+            </div>
+            <div class="modal-footer border-info">
+                <button class="btn btn-outline-info" onclick="copyComparisonToClipboard()">
+                    <i class="bi bi-clipboard"></i> Sao chép
+                </button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. STYLE CSS BỔ SUNG -->
+<style>
+    /* AI Features Styling */
+    .ai-typing-text {
+        line-height: 1.8;
+        white-space: pre-wrap;
+    }
+
+    .analysis-content {
+        line-height: 1.8;
+    }
+
+    .analysis-content p {
+        margin-bottom: 1rem;
+    }
+
+    .analysis-content strong {
+        color: #00f3ff;
+    }
+
+    /* Hover effects for AI buttons */
+    .hover-scale {
+        transition: transform 0.2s;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.05);
+    }
+
+    /* Chat messages styling */
+    #chatMessages::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #chatMessages::-webkit-scrollbar-track {
+        background: #1a1a1a;
+    }
+
+    #chatMessages::-webkit-scrollbar-thumb {
+        background: #555;
+        border-radius: 4px;
+    }
+
+    #chatMessages::-webkit-scrollbar-thumb:hover {
+        background: #777;
+    }
+
+    /* AI Stats cards animation */
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 243, 255, 0.3);
+    }
+
+    /* Loading animation */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .ai-loading {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .modal-xl {
+            max-width: 95%;
+        }
+
+        #view-ai-result .row-cols-md-4 {
+            row-gap: 1rem;
+        }
+    }
+</style>
+
+<!-- 5. SCRIPT BỔ SUNG -->
+<script>
+    // Update AI stats khi load kết quả
+    function updateAiStats() {
+        const songs = document.querySelectorAll('#ai-result-list .custom-card');
+        const songCount = songs.length;
+
+        // Estimate duration (giả sử mỗi bài ~3.5 phút)
+        const totalDuration = Math.round(songCount * 3.5);
+
+        // Calculate average rating (random for demo, thực tế lấy từ API)
+        const avgRating = (4.2 + Math.random() * 0.6).toFixed(1);
+
+        document.getElementById('ai-song-count').innerText = songCount;
+        document.getElementById('ai-duration').innerText = totalDuration;
+        document.getElementById('ai-avg-rating').innerText = avgRating;
+    }
+
+    // Gọi khi render xong grid
+    const originalRenderCardGrid = renderCardGrid;
+    renderCardGrid = function(list, id) {
+        originalRenderCardGrid(list, id);
+        if (id === 'ai-result-list') {
+            setTimeout(updateAiStats, 100);
+        }
+    };
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/my-music.js"></script>
