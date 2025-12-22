@@ -55,29 +55,32 @@ function handleRouting() {
 }
 
 function switchView(viewName, idParam = null) {
-    // 1. Ẩn tất cả views (bao gồm cả song-detail)
+    // 1. Ẩn tất cả views
     document.querySelectorAll('.content-view').forEach(el => el.classList.add('d-none'));
     document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-tab', 'text-white'));
 
     // 2. Active View đích
+    // Đảm bảo trong HTML bạn đã có: <div id="view-ai-result" class="content-view d-none">...</div>
     let targetId = `view-${viewName}`;
     const target = document.getElementById(targetId);
     if (target) target.classList.remove('d-none');
 
-    // 3. Active Sidebar tab (nếu có)
+    // 3. Active Sidebar tab
     const navId = `nav-${viewName}`;
     const navEl = document.getElementById(navId);
     if(navEl) navEl.classList.add('active-tab', 'text-white');
 
-    // 4. Update URL (Silent push - không reload)
+    // 4. Update URL
     let newUrl = '/my-music';
     if(viewName === 'home') newUrl = '/home';
     else if(viewName === 'ranking') newUrl = '/ranking';
     else if(viewName === 'playlist-detail') newUrl = `/playlist/${idParam}`;
     else if(viewName === 'song-detail') newUrl = `/song/${idParam}`;
+    else if(viewName === 'ai-result') newUrl = `/ai-dj`; // [NEW] Thêm dòng này để URL đẹp hơn
     else if (viewName !== 'home') newUrl = `/my-music?tab=${viewName}`;
 
     if(window.location.pathname + window.location.search !== newUrl) {
+        // Lưu lại state để khi back lại không bị lỗi
         window.history.pushState({view: viewName, id: idParam}, '', newUrl);
     }
 
@@ -693,6 +696,11 @@ async function loadSongDetailSPA(sid) {
                             <button class="btn-play-lg hover-scale" onclick="playSongGlobal(null, ${s.songId})"><i class="bi bi-play-circle-fill me-2"></i> PHÁT NGAY</button>
                             <button class="btn-round hover-scale" onclick="openAddToPlaylistModal(${s.songId})"><i class="bi bi-plus-lg"></i></button>
                             <button class="btn-round hover-scale" onclick="alert('Tính năng tải xuống VIP')"><i class="bi bi-download"></i></button>
+                            
+                            <button class="btn btn-outline-info rounded-pill px-4 fw-bold hover-scale" 
+                                    onclick="askAiAboutSong(${s.songId})">
+                                <i class="bi bi-stars"></i> Giải nghĩa AI
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -795,6 +803,7 @@ function playSongGlobal(e, sid) {
         if(audio && s.filePath) { audio.src=s.filePath; audio.play(); }
     });
 }
+
 function renderCardGrid(list, id) {
     const div = document.getElementById(id);
     if(div) div.innerHTML = (list||[]).map(s => `
@@ -806,6 +815,48 @@ function renderCardGrid(list, id) {
             <div onclick="navigateToSong(${s.songId})" class="cursor-pointer"><h6 class="text-white text-truncate fw-bold">${s.title}</h6><small class="text-white-50">${s.artist?.name}</small></div>
         </div></div>`).join('');
 }
+
+// Trong renderCardGrid hoặc hàm hiển thị bài hát
+function renderCardWithDetails(song) {
+    let html = `
+        <div class="custom-card position-relative">
+            <div class="position-relative mb-2">
+                <img src="${song.coverImage}" class="w-100 rounded shadow-sm">
+                <div class="position-absolute top-50 start-50 translate-middle opacity-0 hover-visible cursor-pointer" 
+                     onclick="playSongGlobal(event, ${song.songId})">
+                    <i class="bi bi-play-circle-fill text-success fs-1"></i>
+                </div>
+                <div class="position-absolute bottom-0 end-0 m-2">
+                    ${song.explicit ? '<span class="badge bg-danger">E</span>' : ''}
+                    ${song.isVip ? '<span class="badge bg-warning ms-1">VIP</span>' : ''}
+                </div>
+            </div>
+            
+            <div onclick="navigateToSong(${song.songId})" class="cursor-pointer">
+                <h6 class="text-white text-truncate fw-bold">${song.title}</h6>
+                <small class="text-white-50">${song.artist?.name || song.artistName}</small>
+                
+                <div class="mt-2 d-flex justify-content-between align-items-center">
+                    <small class="text-info">${song.formattedDuration || '0:00'}</small>
+                    ${song.averageRating ?
+        `<small class="text-warning">
+                            <i class="bi bi-star-fill"></i> ${song.averageRating.toFixed(1)}
+                        </small>` : ''
+    }
+                </div>
+                
+                <div class="mt-1 d-flex gap-2">
+                    ${song.bpm ? `<span class="badge bg-dark">${song.bpm} BPM</span>` : ''}
+                    ${song.language ? `<span class="badge bg-secondary">${song.language.toUpperCase()}</span>` : ''}
+                    ${song.releaseYear ? `<span class="badge bg-info">${song.releaseYear}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    return html;
+}
+
+
 function renderHorizontalList(list, id) {
     const div = document.getElementById(id);
     if(div) div.innerHTML = (list||[]).map(s => `
@@ -818,4 +869,395 @@ function renderHorizontalList(list, id) {
                 <i class="bi bi-play-circle-fill fs-3 text-white cursor-pointer ms-2" onclick="playSongGlobal(event, ${s.songId})"></i>
             </div>
         </div>`).join('');
+}
+
+
+async function askAiAboutSong(sid) {
+    // 1. Mở modal và hiện loading
+    const modal = new bootstrap.Modal(document.getElementById('aiModal'));
+    document.getElementById('ai-response-content').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-info" role="status"></div>
+            <p class="mt-2 text-white-50">AI đang nghe và phân tích bài hát...</p>
+        </div>
+    `;
+    modal.show();
+
+    try {
+        // 2. Gọi API Backend
+        const res = await fetch(`${API}/gemini/explain-song/${sid}`);
+        const text = await res.text();
+
+        // 3. Hiển thị kết quả (Dùng hàm typeWriter để tạo hiệu ứng gõ chữ cho ngầu)
+        const contentDiv = document.getElementById('ai-response-content');
+        contentDiv.innerHTML = ''; // Xóa loading
+
+        // Hiệu ứng gõ chữ
+        let i = 0;
+        function typeWriter() {
+            if (i < text.length) {
+                contentDiv.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(typeWriter, 20); // Tốc độ gõ
+            }
+        }
+        typeWriter();
+
+    } catch (e) {
+        document.getElementById('ai-response-content').innerText = "Lỗi kết nối với AI: " + e.message;
+    }
+}
+
+
+// AI DJ FUNCTIONS
+
+// Hàm mở Modal AI (Thêm vào my-music.js nếu chưa có)
+function openAiDjModal() {
+    const modalEl = document.getElementById('aiDjModal');
+    if(modalEl) {
+        // Reset input cũ
+        const input = document.getElementById('ai-mood-input');
+        if(input) input.value = '';
+
+        // Ẩn loading cũ
+        const loading = document.getElementById('ai-dj-loading');
+        if(loading) loading.classList.add('d-none');
+
+        // Hiện modal
+        new bootstrap.Modal(modalEl).show();
+    } else {
+        console.error("Không tìm thấy Modal ID: aiDjModal");
+    }
+}
+// Đưa ra global để HTML gọi được
+window.openAiDjModal = openAiDjModal;
+
+async function submitAiDj() {
+    const mood = document.getElementById('ai-mood-input').value.trim();
+    if (!mood) return alert("Hãy nhập cảm xúc của bạn nhé!");
+
+    // Hiệu ứng loading
+    const btn = document.querySelector('#aiDjModal button');
+    const loading = document.getElementById('ai-dj-loading');
+    btn.disabled = true;
+    loading.classList.remove('d-none');
+
+    try {
+        const res = await fetch(`${API}/gemini/recommend-by-mood`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mood: mood })
+        });
+
+        const songs = await res.json();
+
+        // Ẩn modal
+        bootstrap.Modal.getInstance(document.getElementById('aiDjModal')).hide();
+        btn.disabled = false;
+
+        // Chuyển sang màn hình kết quả
+        switchView('ai-result'); // Cần thêm case 'ai-result' vào hàm switchView gốc nếu chưa có logic tự động
+
+        // Hiển thị mood và bài hát
+        document.getElementById('ai-user-mood-display').innerText = `"${mood}"`;
+        renderCardGrid(songs, 'ai-result-list'); // Tận dụng lại hàm renderCardGrid có sẵn
+
+    } catch (e) {
+        console.error(e);
+        alert('AI đang bận, thử lại sau nhé!');
+        btn.disabled = false;
+        loading.classList.add('d-none');
+    }
+}
+
+function openAdvancedAiModal() {
+    // Tạo modal động nếu chưa có
+    if (!document.getElementById('advancedAiModal')) {
+        createAdvancedAiModal();
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('advancedAiModal'));
+    modal.show();
+}
+
+async function submitAdvancedAi() {
+    const form = document.getElementById('advanced-ai-form');
+    const formData = new FormData(form);
+
+    // Thu thập dữ liệu từ form
+    const request = {
+        description: formData.get('description'),
+        moods: formData.getAll('moods'),
+        genres: formData.getAll('genres'),
+        artists: formData.getAll('artists'),
+        activity: formData.get('activity'),
+        timeOfDay: formData.get('timeOfDay'),
+        duration: parseInt(formData.get('duration')) || 60,
+        songCount: parseInt(formData.get('songCount')) || 10,
+        minRating: parseFloat(formData.get('minRating')) || 3.5,
+        minYear: parseInt(formData.get('minYear')) || 2000,
+        excludeListened: formData.get('excludeListened') === 'on',
+        onlyLikedArtists: formData.get('onlyLikedArtists') === 'on'
+    };
+
+    // Gọi API nâng cao
+    try {
+        const res = await fetch(`${API}/gemini/advanced-recommend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(request)
+        });
+
+        const songs = await res.json();
+
+        // Hiển thị kết quả
+        displayAdvancedResults(request, songs);
+
+    } catch (error) {
+        console.error('AI Error:', error);
+        alert('Lỗi khi gọi AI. Vui lòng thử lại!');
+    }
+}
+
+function displayAdvancedResults(request, songs) {
+    // Đóng modal
+    bootstrap.Modal.getInstance(document.getElementById('advancedAiModal')).hide();
+
+    // Chuyển sang view kết quả
+    switchView('ai-result');
+
+    // Hiển thị thông tin chi tiết
+    const moodDisplay = document.getElementById('ai-user-mood-display');
+    if (moodDisplay) {
+        let html = `<div class="ai-analysis-summary p-3 rounded bg-dark border border-info mb-4">`;
+        html += `<h5><i class="bi bi-graph-up text-info"></i> Phân tích yêu cầu:</h5>`;
+        html += `<div class="row mt-3">`;
+
+        if (request.description) {
+            html += `<div class="col-md-6"><strong>Mô tả:</strong> ${request.description}</div>`;
+        }
+        if (request.moods && request.moods.length > 0) {
+            html += `<div class="col-md-6"><strong>Tâm trạng:</strong> ${request.moods.join(', ')}</div>`;
+        }
+        if (request.genres && request.genres.length > 0) {
+            html += `<div class="col-md-6"><strong>Thể loại:</strong> ${request.genres.join(', ')}</div>`;
+        }
+        if (request.activity) {
+            html += `<div class="col-md-6"><strong>Hoạt động:</strong> ${request.activity}</div>`;
+        }
+
+        html += `</div></div>`;
+        moodDisplay.innerHTML = html;
+    }
+
+    // Render bài hát
+    renderCardGrid(songs, 'ai-result-list');
+}
+
+// Thêm vào my-music.js
+
+function openDeepAnalysisModal(songId) {
+    // Tạo modal phân tích sâu
+    const modalHtml = `
+        <div class="modal fade" id="deepAnalysisModal">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content bg-dark text-white border-info">
+                    <div class="modal-header border-info">
+                        <h5 class="modal-title text-info">
+                            <i class="bi bi-binoculars-fill me-2"></i>Phân tích sâu bài hát
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6 class="fw-bold mb-3">Lĩnh vực phân tích</h6>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="focusArea" 
+                                           id="focusAll" value="all" checked>
+                                    <label class="form-check-label" for="focusAll">
+                                        Toàn diện
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="focusArea" 
+                                           id="focusTechnical" value="technical">
+                                    <label class="form-check-label" for="focusTechnical">
+                                        Kỹ thuật âm nhạc
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="focusArea" 
+                                           id="focusLyrical" value="lyrical">
+                                    <label class="form-check-label" for="focusLyrical">
+                                        Ca từ và nội dung
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="focusArea" 
+                                           id="focusArtistic" value="artistic">
+                                    <label class="form-check-label" for="focusArtistic">
+                                        Nghệ thuật và sáng tạo
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <h6 class="fw-bold mb-3">Tùy chọn bổ sung</h6>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="includeCultural" checked>
+                                    <label class="form-check-label" for="includeCultural">
+                                        Bối cảnh văn hóa
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="includeSimilar" checked>
+                                    <label class="form-check-label" for="includeSimilar">
+                                        Bài hát tương tự
+                                    </label>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <label class="form-label fw-bold">Mức độ chi tiết</label>
+                                    <input type="range" class="form-range" id="depthLevel" 
+                                           min="1" max="5" value="3">
+                                    <small class="text-white-50" id="depthLabel">Trung bình (3/5)</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <h6 class="fw-bold mb-3">Tùy chỉnh khác</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Ngôn ngữ phân tích</label>
+                                    <select class="form-select bg-black text-white border-secondary" id="language">
+                                        <option value="vi">Tiếng Việt</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="alert alert-info border-info bg-dark">
+                                    <small>
+                                        <i class="bi bi-info-circle"></i> Phân tích sâu sẽ sử dụng AI 
+                                        để cung cấp thông tin chi tiết về bài hát từ nhiều góc độ.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="analysisLoading" class="d-none text-center py-5">
+                            <div class="spinner-border text-info" role="status"></div>
+                            <p class="mt-3 text-white-50">AI đang phân tích chuyên sâu...</p>
+                        </div>
+                        
+                        <div id="analysisResult" class="d-none mt-4"></div>
+                    </div>
+                    <div class="modal-footer border-info">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-info fw-bold" 
+                                onclick="startDeepAnalysis(${songId})">
+                            <i class="bi bi-play-fill me-2"></i>Bắt đầu phân tích
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Thêm modal vào DOM nếu chưa có
+    if (!document.getElementById('deepAnalysisModal')) {
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+
+    // Hiển thị modal
+    const modal = new bootstrap.Modal(document.getElementById('deepAnalysisModal'));
+    modal.show();
+}
+
+async function startDeepAnalysis(songId) {
+    // Thu thập thông tin từ form
+    const focusArea = document.querySelector('input[name="focusArea"]:checked').value;
+    const includeCultural = document.getElementById('includeCultural').checked;
+    const includeSimilar = document.getElementById('includeSimilar').checked;
+    const depthLevel = parseInt(document.getElementById('depthLevel').value);
+    const language = document.getElementById('language').value;
+
+    const request = {
+        focusArea: focusArea,
+        includeCultural: includeCultural,
+        includeSimilar: includeSimilar,
+        depthLevel: depthLevel,
+        language: language,
+        userId: USER_ID
+    };
+
+    // Hiển thị loading
+    document.getElementById('analysisLoading').classList.remove('d-none');
+
+    try {
+        const res = await fetch(`${API}/gemini/deep-analyze-song/${songId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(request)
+        });
+
+        const analysisText = await res.text();
+
+        // Hiển thị kết quả
+        document.getElementById('analysisLoading').classList.add('d-none');
+
+        // Chuyển markdown sang HTML
+        const htmlContent = marked.parse(analysisText);
+
+        document.getElementById('analysisResult').innerHTML = `
+            <div class="card bg-dark border-info">
+                <div class="card-body">
+                    <h5 class="card-title text-info mb-3">
+                        <i class="bi bi-file-text me-2"></i>Kết quả phân tích
+                    </h5>
+                    <div class="analysis-content" style="max-height: 400px; overflow-y: auto;">
+                        ${htmlContent}
+                    </div>
+                    <div class="mt-3 text-end">
+                        <button class="btn btn-sm btn-outline-info" onclick="copyAnalysis()">
+                            <i class="bi bi-clipboard"></i> Sao chép
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('analysisResult').classList.remove('d-none');
+
+    } catch (error) {
+        console.error('Analysis error:', error);
+        alert('Lỗi khi phân tích bài hát');
+    }
+}
+
+// Thêm nút phân tích sâu vào trang chi tiết bài hát
+function addDeepAnalysisButton() {
+    const songDetailContainer = document.getElementById('view-song-detail');
+    if (songDetailContainer) {
+        // Tìm vùng chứa các nút action
+        const actionButtons = songDetailContainer.querySelector('.d-flex.align-items-center.gap-2');
+        if (actionButtons) {
+            const deepAnalysisBtn = `
+                <button class="btn btn-outline-info rounded-pill px-4 fw-bold hover-scale" 
+                        onclick="openDeepAnalysisModal(${currentSongId})">
+                    <i class="bi bi-binoculars-fill me-2"></i>Phân tích sâu AI
+                </button>
+            `;
+            actionButtons.insertAdjacentHTML('beforeend', deepAnalysisBtn);
+        }
+    }
+}
+
+// Cập nhật hàm loadSongDetailSPA để thêm nút
+async function loadSongDetailSPA(sid) {
+    // ... code hiện tại ...
+
+    // Sau khi load xong, thêm nút phân tích sâu
+    setTimeout(addDeepAnalysisButton, 100);
 }

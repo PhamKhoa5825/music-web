@@ -65,6 +65,7 @@
     <div th:replace="~{fragments/tab-content :: tab-history}"></div>
     <div th:replace="~{fragments/tab-content :: tab-playlists}"></div>
 
+    <div th:replace="~{fragments/tab-content :: tab-ai-result}"></div>
     <div id="view-song-detail" class="content-view d-none">
     </div>
 </div>
@@ -151,6 +152,163 @@
                 <div class="mt-3 text-end border-top border-secondary pt-3">
                     <button class="btn btn-success rounded-pill px-4 fw-bold" onclick="confirmAddSongs()">Xác nhận</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="aiModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-info">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold text-info"><i class="bi bi-robot"></i> Gemini AI Phân tích</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="ai-response-content">
+                Đang suy nghĩ...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Thêm vào my-music.html -->
+<div class="modal fade" id="advancedAiModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-info">
+            <div class="modal-header border-info">
+                <h5 class="modal-title text-info fw-bold">
+                    <i class="bi bi-magic me-2"></i>AI DJ Nâng Cao
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="advanced-ai-form">
+                    <!-- Mô tả chi tiết -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Mô tả chi tiết yêu cầu</label>
+                        <textarea class="form-control bg-black text-white border-secondary"
+                                  name="description" rows="3"
+                                  placeholder="Ví dụ: Tôi muốn một playlist để tập gym buổi sáng, cần nhạc EDM năng lượng cao..."></textarea>
+                    </div>
+
+                    <!-- Tâm trạng (multi-select) -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tâm trạng</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="moods" value="vui vẻ" id="mood1">
+                                <label class="form-check-label" for="mood1">😊 Vui vẻ</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="moods" value="buồn bã" id="mood2">
+                                <label class="form-check-label" for="mood2">😢 Buồn bã</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="moods" value="lãng mạn" id="mood3">
+                                <label class="form-check-label" for="mood3">❤️ Lãng mạn</label>
+                            </div>
+                        </div>
+
+                        <!-- Thể loại -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Thể loại</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="genres" value="Pop" id="genre1">
+                                <label class="form-check-label" for="genre1">🎵 Pop</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="genres" value="EDM" id="genre2">
+                                <label class="form-check-label" for="genre2">🎧 EDM</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="genres" value="Hip-hop" id="genre3">
+                                <label class="form-check-label" for="genre3">🎤 Hip-hop</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hoạt động & Thời gian -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Hoạt động</label>
+                            <select class="form-select bg-black text-white border-secondary" name="activity">
+                                <option value="">Chọn hoạt động...</option>
+                                <option value="tập gym">💪 Tập gym</option>
+                                <option value="học tập">📚 Học tập</option>
+                                <option value="lái xe">🚗 Lái xe</option>
+                                <option value="thư giãn">🌿 Thư giãn</option>
+                                <option value="tiệc tùng">🎉 Tiệc tùng</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Thời gian</label>
+                            <select class="form-select bg-black text-white border-secondary" name="timeOfDay">
+                                <option value="">Bất kỳ</option>
+                                <option value="sáng">🌅 Sáng</option>
+                                <option value="trưa">☀️ Trưa</option>
+                                <option value="chiều">🌇 Chiều</option>
+                                <option value="tối">🌙 Tối</option>
+                                <option value="đêm">🌌 Đêm khuya</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Số lượng & Thời lượng -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Số bài hát</label>
+                            <input type="number" class="form-control bg-black text-white border-secondary"
+                                   name="songCount" min="5" max="50" value="15">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Thời lượng (phút)</label>
+                            <input type="number" class="form-control bg-black text-white border-secondary"
+                                   name="duration" min="10" max="180" value="60">
+                        </div>
+                    </div>
+
+                    <!-- Nâng cao -->
+                    <div class="accordion mb-4" id="advancedOptions">
+                        <div class="accordion-item bg-black border-secondary">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button bg-dark text-white collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#collapseAdvanced">
+                                    <i class="bi bi-gear me-2"></i>Tùy chọn nâng cao
+                                </button>
+                            </h2>
+                            <div id="collapseAdvanced" class="accordion-collapse collapse"
+                                 data-bs-parent="#advancedOptions">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Rating tối thiểu</label>
+                                            <input type="range" class="form-range" name="minRating"
+                                                   min="1" max="5" step="0.5" value="3.5">
+                                            <small class="text-white-50">≥ <span id="ratingValue">3.5</span> sao</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Năm phát hành từ</label>
+                                            <input type="number" class="form-control bg-black text-white border-secondary"
+                                                   name="minYear" min="1950" max="2025" value="2000">
+                                        </div>
+                                    </div>
+                                    <div class="form-check mt-3">
+                                        <input class="form-check-input" type="checkbox" name="excludeListened" id="excludeListened">
+                                        <label class="form-check-label" for="excludeListened">
+                                            Loại trừ bài đã nghe
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-info">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-info fw-bold px-4" onclick="submitAdvancedAi()">
+                    <i class="bi bi-stars me-2"></i>Phân tích & Gợi ý
+                </button>
             </div>
         </div>
     </div>

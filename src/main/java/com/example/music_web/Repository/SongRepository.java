@@ -65,4 +65,40 @@ public interface SongRepository extends JpaRepository<Song, Long> {
             "OR LOWER(al.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND s.isHidden = false")
     List<Song> searchComplex(@Param("keyword") String keyword);
+
+    // Tìm bài hát theo thời lượng
+    List<Song> findByDurationBetween(Integer minDuration, Integer maxDuration);
+
+    // Tìm bài hát theo BPM
+    List<Song> findByBpmBetween(Integer minBpm, Integer maxBpm);
+
+    // Tìm bài hát theo mức năng lượng
+    List<Song> findByEnergyLevelGreaterThanEqual(Integer minEnergy);
+
+    // Tìm bài hát theo năm phát hành
+    List<Song> findByReleaseYear(Integer releaseYear);
+    List<Song> findByReleaseYearBetween(Integer startYear, Integer endYear);
+
+    // Tìm bài hát theo ngôn ngữ
+    List<Song> findByLanguage(String language);
+
+    // Tìm bài hát không explicit
+    List<Song> findByExplicitFalse();
+
+    // Query phức tạp: tìm bài hát phù hợp cho hoạt động
+    @Query("SELECT s FROM Song s WHERE " +
+            "(:minBpm IS NULL OR s.bpm >= :minBpm) AND " +
+            "(:maxBpm IS NULL OR s.bpm <= :maxBpm) AND " +
+            "(:minEnergy IS NULL OR s.energyLevel >= :minEnergy) AND " +
+            "(:minDance IS NULL OR s.danceability >= :minDance) AND " +
+            "(:language IS NULL OR s.language = :language) AND " +
+            "(:explicit IS NULL OR s.explicit = :explicit)")
+    List<Song> findSongsByActivityParams(
+            @Param("minBpm") Integer minBpm,
+            @Param("maxBpm") Integer maxBpm,
+            @Param("minEnergy") Integer minEnergy,
+            @Param("minDance") Integer minDance,
+            @Param("language") String language,
+            @Param("explicit") Boolean explicit,
+            Pageable pageable);
 }
