@@ -1,234 +1,260 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Chi tiết bài hát</title>
+    <title>Chi tiết bài hát - MusicPro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        /* --- THEME SETUP --- */
-        :root {
-            --text-primary: #fff;
-            --text-secondary: #ffffff80;
-            --accent-color: #00f3ff; /* Màu nhấn Cyan */
-        }
-
         body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: #170f23; /* Màu nền fallback */
-            color: var(--text-primary);
-            overflow-x: hidden;
+            background-color: #050505;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            padding-top: 70px;
         }
 
-        /* --- SIDEBAR LAYOUT ADJUSTMENT --- */
-        /* Copy style cơ bản của sidebar để đảm bảo hiển thị đúng nếu css global chưa load */
-        .sidebar {
-            width: 240px; height: 100vh; position: fixed; top: 0; left: 0;
-            background: #000; border-right: 1px solid #333; z-index: 1000;
-        }
-
-        .main-content {
-            margin-left: 240px; /* Đẩy nội dung sang phải */
-            position: relative;
-            min-height: 100vh;
-            padding-bottom: 80px;
-        }
-
-        /* DYNAMIC BACKGROUND BLUR */
         .bg-blur {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: -1;
-            background-size: cover; background-position: center; background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
             filter: blur(50px) brightness(0.4);
             transition: background-image 0.5s ease-in-out;
         }
-        .bg-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            background: linear-gradient(to bottom, transparent 0%, #000000 100%);
+
+        .hero-section {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+            align-items: flex-end;
         }
 
-        /* LAYOUT COMPONENTS */
-        .main-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-
-        .navbar-custom { background: transparent; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-
-        /* HERO SECTION */
-        .hero-section { display: flex; gap: 30px; margin-top: 30px; align-items: flex-end; }
-
         .cd-thumb {
-            width: 300px; height: 300px;
+            width: 300px;
+            height: 300px;
             border-radius: 8px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.5);
             object-fit: cover;
             transition: transform 0.3s;
         }
-        .cd-thumb:hover { transform: scale(1.02); }
 
-        .song-info h1 { font-size: 3rem; font-weight: 800; margin-bottom: 5px; text-shadow: 0 0 20px rgba(0,243,255,0.3); }
-        .song-meta { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 20px; }
-
-        /* BUTTONS */
-        .btn-play-lg {
-            background: var(--accent-color); color: #000; border: none;
-            padding: 12px 35px; border-radius: 30px; font-weight: 700; font-size: 1.1rem;
-            text-transform: uppercase; transition: 0.3s;
+        .cd-thumb:hover {
+            transform: scale(1.02);
         }
-        .btn-play-lg:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent-color); }
+
+        .btn-play-lg {
+            background: #00f3ff;
+            color: #000;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .btn-play-lg:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00f3ff;
+        }
 
         .btn-round {
-            width: 45px; height: 45px; border-radius: 50%;
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-            color: white; display: inline-flex; align-items: center; justify-content: center;
-            margin-left: 10px; transition: 0.2s; cursor: pointer;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            transition: 0.2s;
+            cursor: pointer;
         }
-        .btn-round:hover { background: rgba(255,255,255,0.3); }
-        .btn-round.active { color: #ff0055; border-color: #ff0055; }
 
-        /* CONTENT GRID */
-        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; margin-top: 50px; }
+        .btn-round:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            margin-top: 50px;
+        }
 
         .lyrics-box {
-            background: rgba(255,255,255,0.05); padding: 30px; border-radius: 12px;
-            backdrop-filter: blur(10px); height: fit-content;
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            height: fit-content;
         }
+
         .lyrics-content {
-            white-space: pre-line; line-height: 2; font-size: 1.1rem; color: #ddd;
-            max-height: 500px; overflow-y: auto;
+            white-space: pre-line;
+            line-height: 2;
+            font-size: 1.1rem;
+            color: #ddd;
+            max-height: 500px;
+            overflow-y: auto;
         }
-        .lyrics-content::-webkit-scrollbar { width: 6px; }
-        .lyrics-content::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
 
         .suggestion-item {
-            display: flex; align-items: center; padding: 10px; border-radius: 6px;
-            transition: 0.2s; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 6px;
+            transition: 0.2s;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .suggestion-item:hover { background: rgba(255,255,255,0.1); }
-        .suggest-img { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; margin-right: 15px; }
 
-        .comment-input { background: transparent; border: none; border-bottom: 1px solid #555; color: white; width: 100%; padding: 10px 0; outline: none; }
-        .comment-input:focus { border-color: var(--accent-color); }
+        .suggestion-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
 
-        .star-rating i { cursor: pointer; color: #555; font-size: 1.5rem; transition: 0.2s; }
-        .star-rating i.active, .star-rating i:hover { color: #ffc107; text-shadow: 0 0 10px #ffc107; }
+        .star-rating i {
+            cursor: pointer;
+            color: #555;
+            font-size: 1.5rem;
+            transition: 0.2s;
+        }
 
-        /* CSS cho Sidebar Links nếu chưa có */
-        .sidebar .nav-link { color: rgba(255,255,255,0.5); padding: 8px 16px; display: block; text-decoration: none; }
-        .sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .star-rating i.active, .star-rating i:hover {
+            color: #ffc107;
+            text-shadow: 0 0 10px #ffc107;
+        }
+
+        .back-button {
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            color: #00f3ff;
+        }
     </style>
 </head>
 <body>
+<!-- Include Navbar -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div th:replace="~{fragments/sidebar :: sidebar}"></div>
+<div class="bg-blur" id="bg-blur"></div>
 
-<div class="main-content">
-    <div class="bg-blur" id="bg-blur"></div>
-    <div class="bg-overlay"></div>
+<div class="container py-4">
+    <!-- Back Button -->
+    <a href="javascript:history.back()" class="back-button">
+        <i class="bi bi-arrow-left me-2"></i> Quay lại
+    </a>
 
-    <nav class="navbar-custom">
-        <div class="container d-flex justify-content-between align-items-center">
-            <a href="javascript:history.back()" class="text-decoration-none text-white fw-bold"><i class="bi bi-arrow-left me-2"></i>QUAY LẠI</a>
-            <div class="d-flex gap-3">
-                <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary rounded-pill px-3" placeholder="Tìm kiếm..." style="width: 200px;">
-                <img src="https://placehold.co/30" class="rounded-circle" style="border: 1px solid var(--accent-color)">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <img id="d-cover" src="https://placehold.co/300" class="cd-thumb">
+
+        <div class="song-info flex-grow-1">
+            <h5 class="text-info text-uppercase">Bài Hát</h5>
+            <h1 class="display-4 fw-bold text-white mb-2" id="d-title">Loading...</h1>
+            <div class="song-meta fs-5 mb-3 text-white-50">
+                <span id="d-artist">Unknown Artist</span> • <span id="d-year">2025</span>
             </div>
-        </div>
-    </nav>
 
-    <div class="main-container">
-
-        <div class="hero-section">
-            <img id="d-cover" src="https://placehold.co/300" class="cd-thumb">
-
-            <div class="song-info flex-grow-1">
-                <h5 class="text-info text-uppercase letter-spacing-2">Bài Hát</h5>
-                <h1 id="d-title">Loading...</h1>
-                <div class="song-meta">
-                    <span id="d-artist">Unknown Artist</span> • <span id="d-year">2025</span>
+            <!-- Stats -->
+            <div class="d-flex align-items-center gap-4 mb-4 text-secondary">
+                <div class="d-flex align-items-center text-warning" title="Đánh giá trung bình">
+                    <i class="bi bi-star-fill me-2"></i>
+                    <span id="stat-rating" class="fw-bold text-white fs-5">--</span>
+                    <span class="text-secondary ms-1">/ 5</span>
                 </div>
-
-                <div class="d-flex align-items-center gap-4 mb-4 text-secondary" style="font-size: 0.95rem;">
-                    <div class="d-flex align-items-center text-warning" title="Đánh giá trung bình">
-                        <i class="bi bi-star-fill me-2"></i>
-                        <span id="stat-rating" class="fw-bold text-white fs-5">--</span>
-                        <span class="text-secondary ms-1" style="font-size: 0.8em;">/ 5</span>
-                    </div>
-                    <div class="d-flex align-items-center" title="Lượt nghe">
-                        <i class="bi bi-headphones me-2"></i>
-                        <span id="stat-views" class="text-white">--</span>
-                    </div>
-                    <div class="d-flex align-items-center" title="Lượt thích">
-                        <i class="bi bi-heart-fill me-2 text-danger"></i>
-                        <span id="stat-likes" class="text-white">--</span>
-                    </div>
+                <div class="d-flex align-items-center" title="Lượt nghe">
+                    <i class="bi bi-headphones me-2"></i>
+                    <span id="stat-views" class="text-white">--</span>
                 </div>
-
-                <div class="d-flex align-items-center mt-4">
-                    <button class="btn-play-lg" onclick="handlePlay()">
-                        <i class="bi bi-play-circle-fill me-2"></i> PHÁT NGAY
-                    </button>
-                    <button class="btn-round" id="btn-like" onclick="handleLike()" title="Thêm vào thư viện">
-                        <i class="bi bi-heart"></i>
-                    </button>
-                    <button class="btn-round" onclick="openPlaylistModal()" title="Thêm vào Playlist">
-                        <i class="bi bi-plus-lg"></i>
-                    </button>
-                    <button class="btn-round" onclick="downloadSong()" title="Tải xuống">
-                        <i class="bi bi-download"></i>
-                    </button>
-                    <button class="btn-round text-warning" onclick="openReportModal()" title="Báo cáo vi phạm">
-                        <i class="bi bi-flag"></i>
-                    </button>
+                <div class="d-flex align-items-center" title="Lượt thích">
+                    <i class="bi bi-heart-fill me-2 text-danger"></i>
+                    <span id="stat-likes" class="text-white">--</span>
                 </div>
+            </div>
 
-                <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 d-flex align-items-center">
-                    <small class="me-3 text-secondary">ĐÁNH GIÁ CỦA BẠN:</small>
-                    <div class="star-rating" id="user-rating-stars">
-                        <i class="bi bi-star-fill" onclick="rate(1)"></i>
-                        <i class="bi bi-star-fill" onclick="rate(2)"></i>
-                        <i class="bi bi-star-fill" onclick="rate(3)"></i>
-                        <i class="bi bi-star-fill" onclick="rate(4)"></i>
-                        <i class="bi bi-star-fill" onclick="rate(5)"></i>
-                    </div>
+            <!-- Action Buttons -->
+            <div class="d-flex align-items-center mt-4 mb-4">
+                <button class="btn-play-lg" onclick="handlePlay()">
+                    <i class="bi bi-play-circle-fill me-2"></i> PHÁT NGAY
+                </button>
+                <button class="btn-round" id="btn-like" onclick="handleLike()" title="Thêm vào thư viện">
+                    <i class="bi bi-heart"></i>
+                </button>
+                <button class="btn-round" onclick="openPlaylistModal()" title="Thêm vào Playlist">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+                <button class="btn-round" onclick="downloadSong()" title="Tải xuống">
+                    <i class="bi bi-download"></i>
+                </button>
+            </div>
+
+            <!-- User Rating -->
+            <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 d-flex align-items-center">
+                <small class="me-3 text-secondary">ĐÁNH GIÁ CỦA BẠN:</small>
+                <div class="star-rating" id="user-rating-stars">
+                    <i class="bi bi-star-fill" onclick="rate(1)"></i>
+                    <i class="bi bi-star-fill" onclick="rate(2)"></i>
+                    <i class="bi bi-star-fill" onclick="rate(3)"></i>
+                    <i class="bi bi-star-fill" onclick="rate(4)"></i>
+                    <i class="bi bi-star-fill" onclick="rate(5)"></i>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="content-grid">
-            <div class="left-col">
-                <div class="lyrics-box mb-5">
-                    <h4 class="fw-bold mb-4 text-info"><i class="bi bi-mic-fill me-2"></i>Lời bài hát</h4>
-                    <div id="d-lyrics" class="lyrics-content">
-                        Đang cập nhật lời bài hát...
-                    </div>
+    <!-- Content Grid -->
+    <div class="content-grid">
+        <div class="left-col">
+            <!-- Lyrics -->
+            <div class="lyrics-box mb-5">
+                <h4 class="fw-bold mb-4 text-info"><i class="bi bi-mic-fill me-2"></i>Lời bài hát</h4>
+                <div id="d-lyrics" class="lyrics-content">
+                    Đang cập nhật lời bài hát...
                 </div>
+            </div>
 
-                <div class="comments-section">
-                    <h4 class="fw-bold mb-3">Bình luận (<span id="cmt-count">0</span>)</h4>
-                    <div class="d-flex gap-3 mb-4">
-                        <img src="https://placehold.co/40" class="rounded-circle">
-                        <div class="w-100">
-                            <input type="text" id="cmt-input" class="comment-input" placeholder="Viết bình luận công khai...">
-                            <div class="text-end mt-2">
-                                <button class="btn btn-sm btn-outline-info" onclick="postComment()">Gửi</button>
-                            </div>
+            <!-- Comments -->
+            <div class="comments-section">
+                <h4 class="fw-bold mb-3">Bình luận (<span id="cmt-count">0</span>)</h4>
+                <div class="d-flex gap-3 mb-4">
+                    <img src="https://placehold.co/40" class="rounded-circle">
+                    <div class="w-100">
+                        <input type="text" id="cmt-input" class="form-control bg-dark text-white border-secondary"
+                               placeholder="Viết bình luận công khai...">
+                        <div class="text-end mt-2">
+                            <button class="btn btn-sm btn-outline-info" onclick="postComment()">Gửi</button>
                         </div>
                     </div>
-                    <div id="comment-list"></div>
                 </div>
+                <div id="comment-list"></div>
             </div>
+        </div>
 
-            <div class="right-col">
-                <h5 class="fw-bold mb-3 text-uppercase small text-secondary">Có thể bạn thích</h5>
-                <div id="recommend-list">
-                    <div class="text-center mt-3"><div class="spinner-border text-info spinner-border-sm"></div></div>
+        <div class="right-col">
+            <h5 class="fw-bold mb-3 text-uppercase small text-secondary">Có thể bạn thích</h5>
+            <div id="recommend-list">
+                <div class="text-center mt-3">
+                    <div class="spinner-border text-info spinner-border-sm"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Playlist Modal -->
 <div class="modal fade" id="playlistModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark text-white border-secondary">
@@ -243,245 +269,303 @@
     </div>
 </div>
 
-<div th:replace="~{fragments/sidebar :: create-playlist-modal}"></div>
-
-<script th:inline="javascript">
-    const SONG_ID = [[${songId}]];
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API = '/api';
     const USER_ID = localStorage.getItem('music_user_id') || 1;
-    const API = "/api";
 
-    // --- 1. LOAD MAIN DATA ---
-    async function loadFullData() {
-        try {
-            const res = await fetch(`${API}/songs/${SONG_ID}/detail`);
-            const data = await res.json();
-            const s = data.song;
+    // Get song ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const SONG_ID = urlParams.get('id');
 
-            // Bind Info
-            document.title = s.title + " | MusicPro";
-            document.getElementById('d-title').innerText = s.title;
-            document.getElementById('d-artist').innerText = s.artist ? s.artist.name : 'Unknown';
-            document.getElementById('d-cover').src = s.coverImage || 'https://placehold.co/300';
-
-            // Stats
-            document.getElementById('stat-views').innerText = s.views ? s.views.toLocaleString() : "0";
-            document.getElementById('stat-likes').innerText = data.totalLikes ? data.totalLikes.toLocaleString() : "0";
-
-            if (s.averageRating && s.averageRating > 0) {
-                document.getElementById('stat-rating').innerText = s.averageRating.toFixed(1);
-            } else {
-                document.getElementById('stat-rating').innerText = "--";
-            }
-
-            // Bind Background
-            const bgUrl = s.backgroundImage || s.coverImage || 'https://placehold.co/1920x1080';
-            document.getElementById('bg-blur').style.backgroundImage = `url('${bgUrl}')`;
-
-            // Bind Lyrics
-            if(s.lyrics) {
-                document.getElementById('d-lyrics').innerText = s.lyrics;
-            } else {
-                document.getElementById('d-lyrics').innerHTML = '<span class="text-muted fst-italic">Chưa có lời bài hát.</span>';
-            }
-
-            // Bind Recommendations
-            renderRecommendations(data.relatedSongs);
-
-        } catch(e) { console.error("Err loading detail", e); }
-    }
-
-    // --- 2. LOAD SIDEBAR DATA (NEW) ---
-    async function loadSidebarPlaylists() {
-        try {
-            const res = await fetch(`${API}/playlists/user/${USER_ID}`);
-            const data = await res.json();
-            const container = document.getElementById('sidebar-playlists');
-            // Cập nhật DOM của Sidebar fragment
-            if(container) {
-                container.innerHTML = '';
-                // Sắp xếp ID giảm dần
-                const sorted = data.sort((a,b) => b.playlistId - a.playlistId).slice(0, 10);
-                sorted.forEach(p => {
-                    container.innerHTML += `
-                        <a href="/playlist/${p.playlistId}" class="nav-link text-truncate py-2 text-white-50">
-                            <i class="bi bi-music-note-list"></i> ${p.name}
-                        </a>`;
-                });
-            }
-        } catch(e) { console.error("Err loading sidebar", e); }
-    }
-
-    // --- 3. HANDLE SIDEBAR CREATE PLAYLIST BUTTON ---
-    // Vì fragment 'sidebar' có nút id="btn-create-playlist", ta cần gán sự kiện cho nó
-    document.addEventListener('DOMContentLoaded', () => {
-        const btnCreate = document.getElementById('btn-create-playlist');
-        if(btnCreate) {
-            btnCreate.addEventListener('click', () => {
-                document.getElementById('newPlName').value = '';
-                new bootstrap.Modal(document.getElementById('createPlModal')).show();
-            });
-        }
-    });
-
-    // Logic nút Tạo trong Modal Sidebar (Copy từ my-music.js đơn giản hóa)
-    async function createPlaylist() {
-        // (Lưu ý: Bạn có thể cần copy hàm createPlaylist đầy đủ từ my-music.js vào đây
-        // hoặc tách hàm đó ra file utils.js dùng chung. Ở đây tôi viết gọn lại)
-        const name = document.getElementById('newPlName').value;
-        const isPublic = document.getElementById('isPublicCheck').checked;
-        if(!name) return alert("Nhập tên playlist!");
-
-        try {
-            await fetch(`${API}/playlists`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ userId: USER_ID, name: name, isPublic: isPublic })
-            });
-            alert("Tạo thành công!");
-            bootstrap.Modal.getInstance(document.getElementById('createPlModal')).hide();
-            loadSidebarPlaylists(); // Reload sidebar
-        } catch(e) { console.error(e); }
-    }
-
-    // --- 4. RENDER RECOMMENDATIONS (WITH LOGIC CLICK) ---
-    function renderRecommendations(songs) {
-        const container = document.getElementById('recommend-list');
-        container.innerHTML = '';
-        if(!songs || songs.length === 0) {
-            container.innerHTML = '<small class="text-white-50">Không có gợi ý phù hợp.</small>';
+    // Load song detail
+    async function loadSongDetail() {
+        if (!SONG_ID) {
+            alert('Không tìm thấy bài hát!');
+            window.location.href = '/home.html';
             return;
         }
 
-        songs.forEach(s => {
-            let img = s.coverImage || `https://placehold.co/50?text=${s.title.charAt(0)}`;
-            container.innerHTML += `
-            <div class="suggestion-item" onclick="window.location.href='/song/${s.songId}'">
-                <img src="${img}" class="suggest-img">
-                <div class="overflow-hidden">
-                    <div class="fw-bold text-truncate">${s.title}</div>
-                    <small class="text-secondary text-truncate">${s.artist ? s.artist.name : 'Unknown'}</small>
-                </div>
-                <div class="ms-auto" onclick="playSuggestedSong(event, ${s.songId})">
-                    <i class="bi bi-play-fill fs-4 text-secondary hover-text-info"></i>
-                </div>
-            </div>
-        `;
-        });
-    }
+        try {
+            const res = await fetch(`${API}/songs/${SONG_ID}/detail`);
+            const data = await res.json();
+            const song = data.song;
 
-    function playSuggestedSong(event, songId) {
-        event.stopPropagation();
-        fetch(`${API}/history?userId=${USER_ID}&songId=${songId}`, {method: 'POST'});
-        alert("Đang phát từ gợi ý: ID " + songId);
-    }
+            // Update page title
+            document.title = `${song.title} | MusicPro`;
 
-    // --- 5. OTHER ACTIONS ---
-    async function handlePlay() {
-        await fetch(`${API}/history?userId=${USER_ID}&songId=${SONG_ID}`, {method: 'POST'});
-        alert("Đang phát: " + document.getElementById('d-title').innerText);
-    }
+            // Update song info
+            document.getElementById('d-title').textContent = song.title;
+            document.getElementById('d-artist').textContent = song.artist?.name || 'Unknown';
+            document.getElementById('d-cover').src = song.coverImage || 'https://placehold.co/300';
 
-    async function handleLike() {
-        const res = await fetch(`${API}/favorites/toggle?userId=${USER_ID}&songId=${SONG_ID}`, {method: 'POST'});
-        const txt = await res.text();
-        const btn = document.getElementById('btn-like');
-        if(txt.includes('Liked')) {
-            btn.classList.add('active');
-            btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
-        } else {
-            btn.classList.remove('active');
-            btn.innerHTML = '<i class="bi bi-heart"></i>';
+            // Update stats
+            document.getElementById('stat-views').textContent = song.views?.toLocaleString() || '0';
+            document.getElementById('stat-likes').textContent = data.totalLikes?.toLocaleString() || '0';
+            document.getElementById('stat-rating').textContent = song.averageRating?.toFixed(1) || '--';
+
+            // Update background
+            const bgUrl = song.backgroundImage || song.coverImage || 'https://placehold.co/1920x1080';
+            document.getElementById('bg-blur').style.backgroundImage = `url('${bgUrl}')`;
+
+            // Update lyrics
+            document.getElementById('d-lyrics').textContent = song.lyrics || 'Chưa có lời bài hát.';
+
+            // Load recommendations
+            renderRecommendations(data.relatedSongs || []);
+
+            // Load comments
+            loadComments();
+
+            // Check if song is liked
+            checkLikedStatus();
+
+        } catch (error) {
+            console.error('Error loading song detail:', error);
+            alert('Không thể tải thông tin bài hát!');
         }
     }
 
+    // Render recommendations
+    function renderRecommendations(songs) {
+        const container = document.getElementById('recommend-list');
+        container.innerHTML = '';
+
+        if (!songs || songs.length === 0) {
+            container.innerHTML = '<p class="text-white-50">Không có gợi ý phù hợp.</p>';
+            return;
+        }
+
+        songs.forEach(song => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.innerHTML = `
+                    <img src="${song.coverImage || 'https://placehold.co/50'}"
+                         class="rounded me-3" width="50" height="50" style="object-fit: cover;">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold text-white">${song.title}</div>
+                        <small class="text-white-50">${song.artist?.name || 'Unknown'}</small>
+                    </div>
+                    <i class="bi bi-play-fill fs-4 text-secondary"
+                       onclick="playSongFromRecommendation(${song.songId}, event)"></i>
+                `;
+            item.onclick = () => navigateToSong(song.songId);
+            container.appendChild(item);
+        });
+    }
+
+    // Navigate to song (reload page)
+    function navigateToSong(songId) {
+        window.location.href = `/song-detail.html?id=${songId}`;
+    }
+
+    // Play song from recommendation
+    function playSongFromRecommendation(songId, event) {
+        event.stopPropagation();
+        playSong(songId);
+    }
+
+    // Play song function
+    async function playSong(songId) {
+        try {
+            await fetch(`${API}/history?userId=${USER_ID}&songId=${songId}`, {
+                method: 'POST'
+            });
+
+            // Update player on all pages (if exists)
+            const songRes = await fetch(`${API}/songs/${songId}/detail`);
+            const songData = await songRes.json();
+            const song = songData.song;
+
+            if (window.top && window.top.updatePlayer) {
+                window.top.updatePlayer(song);
+            }
+
+            alert(`Đang phát: ${song.title}`);
+        } catch (error) {
+            console.error('Error playing song:', error);
+        }
+    }
+
+    // Handle play button
+    async function handlePlay() {
+        await playSong(SONG_ID);
+    }
+
+    // Handle like button
+    async function handleLike() {
+        try {
+            const res = await fetch(`${API}/favorites/toggle?userId=${USER_ID}&songId=${SONG_ID}`, {
+                method: 'POST'
+            });
+            const text = await res.text();
+            const btn = document.getElementById('btn-like');
+
+            if (text.includes('Liked')) {
+                btn.innerHTML = '<i class="bi bi-heart-fill text-danger"></i>';
+                btn.classList.add('active');
+            } else {
+                btn.innerHTML = '<i class="bi bi-heart"></i>';
+                btn.classList.remove('active');
+            }
+
+            // Update like count
+            loadSongDetail();
+        } catch (error) {
+            console.error('Error toggling like:', error);
+        }
+    }
+
+    // Check liked status
+    async function checkLikedStatus() {
+        try {
+            const res = await fetch(`${API}/favorites/check?userId=${USER_ID}&songId=${SONG_ID}`);
+            const isLiked = await res.json();
+            const btn = document.getElementById('btn-like');
+
+            if (isLiked) {
+                btn.innerHTML = '<i class="bi bi-heart-fill text-danger"></i>';
+                btn.classList.add('active');
+            }
+        } catch (error) {
+            console.error('Error checking like status:', error);
+        }
+    }
+
+    // Rate song
     async function rate(star) {
         const stars = document.querySelectorAll('#user-rating-stars i');
-        stars.forEach((s, idx) => { s.classList.toggle('active', idx < star); });
+        stars.forEach((s, idx) => {
+            s.classList.toggle('active', idx < star);
+        });
+
         try {
-            const res = await fetch(`${API}/ratings`, {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ userId: USER_ID, songId: SONG_ID, rating: star, review: "" })
+            await fetch(`${API}/ratings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: USER_ID,
+                    songId: SONG_ID,
+                    rating: star,
+                    review: ""
+                })
             });
-            if (res.ok) { loadFullData(); alert(`Cảm ơn đánh giá ${star} sao!`); }
-        } catch (e) { console.error(e); }
-    }
 
-    // --- COMMENTS & PLAYLIST MODAL ---
-    async function loadComments() {
-        const res = await fetch(`${API}/comments/song/${SONG_ID}?sort=newest`);
-        const comments = await res.json();
-        document.getElementById('cmt-count').innerText = comments.length;
-        const list = document.getElementById('comment-list');
-        list.innerHTML = '';
-        comments.forEach(c => {
-            list.innerHTML += `
-                <div class="d-flex gap-3 py-3 border-bottom border-secondary border-opacity-10">
-                    <img src="https://placehold.co/40" class="rounded-circle" width="40" height="40">
-                    <div>
-                        <div class="mb-1">
-                            <span class="fw-bold text-info me-2">${c.user ? c.user.username : 'User'}</span>
-                            <small class="text-muted" style="font-size: 0.8rem">${new Date(c.createdAt).toLocaleDateString()}</small>
-                        </div>
-                        <p class="text-light mb-1 small">${c.content}</p>
-                    </div>
-                </div>`;
-        });
-    }
-
-    async function postComment() {
-        const txt = document.getElementById('cmt-input').value;
-        if(!txt) return;
-        await fetch(`${API}/comments/add`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ userId: USER_ID, songId: SONG_ID, content: txt })
-        });
-        document.getElementById('cmt-input').value = '';
-        loadComments();
-    }
-
-    async function openPlaylistModal() {
-        const modal = new bootstrap.Modal(document.getElementById('playlistModal'));
-        const res = await fetch(`${API}/playlists/user/${USER_ID}`);
-        const playlists = await res.json();
-        const div = document.getElementById('playlist-opts');
-        div.innerHTML = '';
-        playlists.forEach(p => {
-            div.innerHTML += `
-                <div class="p-2 border-bottom border-secondary cursor-pointer hover-bg-dark"
-                     onclick="addToPlaylist(${p.playlistId})">
-                    <i class="bi bi-music-note-list me-2"></i> ${p.name}
-                </div>`;
-        });
-        modal.show();
-    }
-
-    async function addToPlaylist(pid) {
-        await fetch(`${API}/playlists/${pid}/songs`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ songId: SONG_ID })
-        });
-        alert("Đã thêm vào playlist!");
-        bootstrap.Modal.getInstance(document.getElementById('playlistModal')).hide();
-    }
-
-    function openReportModal() {
-        const reason = prompt("Lý do báo cáo:");
-        if(reason) {
-            fetch(`${API}/reports/create`, {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ reporterId: USER_ID, targetId: SONG_ID, type: 'SONG', reason: reason })
-            });
-            alert("Đã gửi báo cáo!");
+            alert(`Cảm ơn đánh giá ${star} sao!`);
+            loadSongDetail();
+        } catch (error) {
+            console.error('Error rating song:', error);
         }
     }
 
-    function downloadSong() { alert("Tính năng tải nhạc VIP đang phát triển!"); }
+    // Load comments
+    async function loadComments() {
+        try {
+            const res = await fetch(`${API}/comments/song/${SONG_ID}`);
+            const comments = await res.json();
 
-    // --- INIT ---
-    loadFullData();
-    loadComments();
-    loadSidebarPlaylists(); // Load sidebar data
+            document.getElementById('cmt-count').textContent = comments.length;
+            const container = document.getElementById('comment-list');
+            container.innerHTML = '';
 
+            comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'd-flex gap-3 py-3 border-bottom border-secondary border-opacity-10';
+                commentDiv.innerHTML = `
+                        <img src="https://placehold.co/40" class="rounded-circle" width="40" height="40">
+                        <div>
+                            <div class="mb-1">
+                                <span class="fw-bold text-info me-2">${comment.user?.username || 'User'}</span>
+                                <small class="text-muted">${new Date(comment.createdAt).toLocaleDateString()}</small>
+                            </div>
+                            <p class="text-light mb-1 small">${comment.content}</p>
+                        </div>
+                    `;
+                container.appendChild(commentDiv);
+            });
+        } catch (error) {
+            console.error('Error loading comments:', error);
+        }
+    }
+
+    // Post comment
+    async function postComment() {
+        const input = document.getElementById('cmt-input');
+        const content = input.value.trim();
+
+        if (!content) return;
+
+        try {
+            await fetch(`${API}/comments/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: USER_ID,
+                    songId: SONG_ID,
+                    content: content
+                })
+            });
+
+            input.value = '';
+            loadComments();
+        } catch (error) {
+            console.error('Error posting comment:', error);
+        }
+    }
+
+    // Open playlist modal
+    async function openPlaylistModal() {
+        try {
+            const res = await fetch(`${API}/playlists/user/${USER_ID}`);
+            const playlists = await res.json();
+
+            const container = document.getElementById('playlist-opts');
+            container.innerHTML = '';
+
+            if (playlists.length === 0) {
+                container.innerHTML = '<p class="text-white-50">Bạn chưa có playlist nào.</p>';
+            } else {
+                playlists.forEach(playlist => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 border-bottom border-secondary cursor-pointer hover-bg-dark';
+                    div.innerHTML = `
+                            <i class="bi bi-music-note-list me-2"></i> ${playlist.name}
+                        `;
+                    div.onclick = () => addToPlaylist(playlist.playlistId);
+                    container.appendChild(div);
+                });
+            }
+
+            new bootstrap.Modal(document.getElementById('playlistModal')).show();
+        } catch (error) {
+            console.error('Error loading playlists:', error);
+        }
+    }
+
+    // Add to playlist
+    async function addToPlaylist(playlistId) {
+        try {
+            await fetch(`${API}/playlists/${playlistId}/songs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ songId: SONG_ID })
+            });
+
+            alert('Đã thêm vào playlist!');
+            bootstrap.Modal.getInstance(document.getElementById('playlistModal')).hide();
+        } catch (error) {
+            console.error('Error adding to playlist:', error);
+        }
+    }
+
+    // Download song
+    function downloadSong() {
+        alert('Tính năng tải xuống đang phát triển!');
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadSongDetail);
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/global-player.js"></script>
 </body>
 </html>

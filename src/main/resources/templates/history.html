@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch Sử Nghe Nhạc - MusicPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            padding-top: 70px; /* For fixed navbar */
+        }
+        .history-item:hover { background: #1a1a1a; cursor: pointer; }
+        .time-ago { font-size: 0.8rem; color: #888; }
+        .dropdown-item-danger { color: #dc3545; }
+        .dropdown-item-danger:hover { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="main-content">
+    <div class="container-fluid py-4 px-5">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pt-3">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-clock-history text-warning fs-1"></i>
+                <div>
+                    <h1 class="fw-bold mb-0">Lịch sử nghe nhạc</h1>
+                    <p class="text-white-50 mb-0">Những bài hát bạn đã nghe gần đây</p>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-danger" onclick="clearAllHistory()">
+                    <i class="bi bi-trash me-2"></i>Xóa tất cả
+                </button>
+                <button class="btn btn-outline-info" onclick="exportHistory()">
+                    <i class="bi bi-download me-2"></i>Xuất CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row mb-5">
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-music-note-list fs-1 text-info mb-2"></i>
+                        <h3 id="total-songs" class="text-white">0</h3>
+                        <small class="text-white-50">Bài hát đã nghe</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock fs-1 text-success mb-2"></i>
+                        <h3 id="total-time" class="text-white">0h</h3>
+                        <small class="text-white-50">Tổng thời gian</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar-week fs-1 text-warning mb-2"></i>
+                        <h3 id="streak-days" class="text-white">0</h3>
+                        <small class="text-white-50">Ngày liên tiếp</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-graph-up-arrow fs-1 text-primary mb-2"></i>
+                        <h3 id="last-week" class="text-white">0</h3>
+                        <small class="text-white-50">Tuần trước</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="d-flex flex-wrap gap-3 mb-4 bg-dark p-3 rounded">
+            <div>
+                <span class="text-muted me-2">Lọc theo:</span>
+                <select id="filter-period" class="form-select form-select-sm bg-black text-white border-secondary d-inline-block w-auto" onchange="loadHistory()">
+                    <option value="all">Tất cả thời gian</option>
+                    <option value="today">Hôm nay</option>
+                    <option value="week">Tuần này</option>
+                    <option value="month">Tháng này</option>
+                </select>
+            </div>
+            <div>
+                <span class="text-muted me-2">Sắp xếp:</span>
+                <select id="sort-by" class="form-select form-select-sm bg-black text-white border-secondary d-inline-block w-auto" onchange="loadHistory()">
+                    <option value="newest">Mới nhất</option>
+                    <option value="oldest">Cũ nhất</option>
+                    <option value="most-played">Nghe nhiều nhất</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- History List -->
+        <div class="table-responsive">
+            <table class="table table-dark table-hover bg-transparent align-middle">
+                <thead>
+                <tr class="text-secondary">
+                    <th width="50">#</th>
+                    <th>BÀI HÁT</th>
+                    <th>NGHỆ SĨ</th>
+                    <th>THỂ LOẠI</th>
+                    <th>THỜI GIAN</th>
+                    <th width="80"></th>
+                </tr>
+                </thead>
+                <tbody id="history-body">
+                <tr><td colspan="6" class="text-center"><div class="spinner-border text-info"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-history" class="text-center py-5 d-none">
+            <i class="bi bi-clock-history fs-1 text-muted mb-3 d-block"></i>
+            <h4 class="text-white-50">Chưa có lịch sử nghe nhạc</h4>
+            <p class="text-muted">Bắt đầu nghe nhạc để xem lịch sử tại đây</p>
+            <a href="/index.html" class="btn btn-info">Khám phá nhạc mới</a>
+        </div>
+
+        <!-- Pagination -->
+        <nav id="pagination" class="d-none">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled"><a class="page-link bg-dark text-white border-secondary" href="#">Trước</a></li>
+                <li class="page-item active"><a class="page-link bg-info border-info" href="#">1</a></li>
+                <li class="page-item"><a class="page-link bg-dark text-white border-secondary" href="#">2</a></li>
+                <li class="page-item"><a class="page-link bg-dark text-white border-secondary" href="#">3</a></li>
+                <li class="page-item"><a class="page-link bg-dark text-white border-secondary" href="#">Sau</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-danger">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa mục này khỏi lịch sử?</p>
+                <p class="text-white-50 small">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer border-danger">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API = '/api';
+    const USER_ID = localStorage.getItem('music_user_id') || 1;
+    let itemToDelete = null;
+
+    async function loadHistory() {
+        const tbody = document.getElementById('history-body');
+        const emptyState = document.getElementById('empty-history');
+        const pagination = document.getElementById('pagination');
+
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border text-info"></div></td></tr>';
+
+        try {
+            const res = await fetch(`${API}/history/user/${USER_ID}`);
+            const data = await res.json();
+
+            if(data.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('d-none');
+                pagination.classList.add('d-none');
+                return;
+            }
+
+            emptyState.classList.add('d-none');
+            pagination.classList.remove('d-none');
+
+            tbody.innerHTML = '';
+            data.forEach((h, idx) => {
+                const s = h.song;
+                const timeAgo = getTimeAgo(new Date(h.listenedAt));
+
+                tbody.innerHTML += `
+                        <tr class="history-item" onclick="window.location.href='/song-detail.html?id=${s.songId}'">
+                            <td class="text-white-50 text-center">${idx + 1}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="${s.coverImage || 'https://placehold.co/40'}" class="rounded me-3" width="40" height="40">
+                                    <div>
+                                        <div class="fw-bold text-white text-truncate" style="max-width: 300px;">${s.title}</div>
+                                        <div class="time-ago">${timeAgo}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-white-50">${s.artist?.name || 'Unknown'}</td>
+                            <td><span class="badge bg-secondary">${s.genres?.[0]?.name || 'Chưa phân loại'}</span></td>
+                            <td class="text-white-50 small">${new Date(h.listenedAt).toLocaleString()}</td>
+                            <td class="text-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm text-secondary" data-bs-toggle="dropdown" onclick="event.stopPropagation()">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-dark">
+                                        <li><a class="dropdown-item" href="#" onclick="playSong(${s.songId}); event.stopPropagation()">
+                                            <i class="bi bi-play-fill me-2"></i>Phát ngay
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="addToPlaylist(${s.songId}); event.stopPropagation()">
+                                            <i class="bi bi-plus-circle me-2"></i>Thêm vào playlist
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item dropdown-item-danger" href="#" onclick="confirmDelete(${h.historyId}); event.stopPropagation()">
+                                            <i class="bi bi-trash me-2"></i>Xóa khỏi lịch sử
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>`;
+            });
+
+            updateStats(data);
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Lỗi tải dữ liệu</td></tr>';
+        }
+    }
+
+    function updateStats(history) {
+        document.getElementById('total-songs').innerText = history.length;
+
+        // Calculate total time (assuming 3.5 minutes per song)
+        const totalMinutes = history.length * 3.5;
+        const hours = Math.floor(totalMinutes / 60);
+        document.getElementById('total-time').innerText = `${hours}h`;
+
+        // Simple streak calculation (demo)
+        document.getElementById('streak-days').innerText = '7';
+        document.getElementById('last-week').innerText = Math.floor(history.length * 0.3);
+    }
+
+    function getTimeAgo(date) {
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return 'Vừa xong';
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        return `${diffDays} ngày trước`;
+    }
+
+    function confirmDelete(historyId) {
+        itemToDelete = historyId;
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        modal.show();
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+        if (!itemToDelete) return;
+
+        try {
+            await fetch(`${API}/history/${itemToDelete}`, { method: 'DELETE' });
+            bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+            loadHistory();
+            showToast('Đã xóa khỏi lịch sử', 'success');
+        } catch(e) {
+            showToast('Lỗi khi xóa', 'danger');
+        }
+    });
+
+    async function clearAllHistory() {
+        if(!confirm('Bạn có chắc muốn xóa toàn bộ lịch sử nghe nhạc?\nHành động này không thể hoàn tác.')) return;
+
+        try {
+            // Assuming we have an API to clear all history
+            // await fetch(`${API}/history/user/${USER_ID}/clear`, { method: 'DELETE' });
+            showToast('Tính năng đang phát triển', 'info');
+            // loadHistory();
+        } catch(e) {
+            showToast('Lỗi khi xóa lịch sử', 'danger');
+        }
+    }
+
+    function exportHistory() {
+        showToast('Tính năng xuất CSV đang phát triển', 'info');
+    }
+
+    function playSong(songId) {
+        fetch(`${API}/history?userId=${USER_ID}&songId=${songId}`, {method: 'POST'});
+        showToast('Đang phát bài hát', 'success');
+    }
+
+    function showToast(message, type) {
+        // Implement toast notification
+        alert(message); // Simple alert for now
+    }
+
+    document.addEventListener('DOMContentLoaded', loadHistory);
+</script>
+<script src="/js/global-player.js"></script>
+</body>
+</html>

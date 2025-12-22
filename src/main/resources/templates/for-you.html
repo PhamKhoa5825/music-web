@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dành Cho Bạn - MusicPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            padding-top: 70px; /* For fixed navbar */
+        }
+        .section-title { font-weight: 700; font-size: 1.5rem; margin-bottom: 20px; color: white; }
+        .custom-card { background: #181818; padding: 16px; border-radius: 8px; transition: 0.3s; cursor: pointer; position: relative; }
+        .custom-card:hover { background: #282828; }
+        .play-btn-hover {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 50px; height: 50px; background: #1db954; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            opacity: 0; transition: 0.3s; box-shadow: 0 8px 16px rgba(0,0,0,0.3); color: black;
+        }
+        .custom-card:hover .play-btn-hover { opacity: 1; }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="main-content">
+    <div class="container-fluid py-4 px-5">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pt-3">
+            <div>
+                <h1 class="fw-bold text-info">Dành Cho Bạn</h1>
+                <p class="text-white-50">Playlist được AI tạo riêng theo sở thích của bạn</p>
+            </div>
+            <button class="btn btn-outline-info" onclick="refreshRecommendations()">
+                <i class="bi bi-arrow-clockwise me-2"></i>Làm mới
+            </button>
+        </div>
+
+        <!-- Daily Mix -->
+        <div class="mb-5">
+            <h3 class="section-title">
+                <i class="bi bi-stars text-warning me-2"></i>Daily Mix
+                <span class="fs-6 text-white-50 fw-normal ms-2">Tuyển tập riêng</span>
+            </h3>
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="daily-mix-list">
+                <div class="col"><div class="spinner-border text-success"></div></div>
+            </div>
+        </div>
+
+        <!-- Trending -->
+        <div class="mb-5">
+            <h3 class="section-title text-warning">
+                <i class="bi bi-fire me-2"></i>Xu hướng
+            </h3>
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="trending-list"></div>
+        </div>
+
+        <!-- Discovery -->
+        <div class="mb-5">
+            <h3 class="section-title text-info">
+                <i class="bi bi-compass me-2"></i>Khám phá
+            </h3>
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="discovery-list"></div>
+        </div>
+
+        <!-- Mood-based -->
+        <div class="mb-5">
+            <h3 class="section-title text-success">
+                <i class="bi bi-emoji-smile me-2"></i>Theo tâm trạng
+            </h3>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <button class="btn btn-outline-info" onclick="loadMoodSongs('happy')">😊 Vui vẻ</button>
+                <button class="btn btn-outline-info" onclick="loadMoodSongs('chill')">😌 Thư giãn</button>
+                <button class="btn btn-outline-info" onclick="loadMoodSongs('energetic')">⚡ Năng lượng</button>
+                <button class="btn btn-outline-info" onclick="loadMoodSongs('sad')">😢 Buồn</button>
+                <button class="btn btn-outline-info" onclick="loadMoodSongs('focus')">🎯 Tập trung</button>
+            </div>
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4" id="mood-songs-list"></div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API = '/api';
+    const USER_ID = localStorage.getItem('music_user_id') || 1;
+
+    async function loadForYouData() {
+        try {
+            const res = await fetch(`${API}/foryou/${USER_ID}`);
+            const data = await res.json();
+
+            renderCardGrid(data.dailyMix, 'daily-mix-list');
+            renderCardGrid(data.trending, 'trending-list');
+            renderCardGrid(data.discovery, 'discovery-list');
+        } catch(e) {
+            console.error("ForYou Err", e);
+            showError();
+        }
+    }
+
+    async function loadMoodSongs(mood) {
+        const container = document.getElementById('mood-songs-list');
+        container.innerHTML = '<div class="col-12"><div class="spinner-border text-info"></div></div>';
+
+        try {
+            const res = await fetch(`${API}/gemini/recommend-by-mood`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mood: mood })
+            });
+            const songs = await res.json();
+            renderCardGrid(songs, 'mood-songs-list');
+        } catch(e) {
+            container.innerHTML = '<div class="col-12 text-muted">Lỗi tải dữ liệu</div>';
+        }
+    }
+
+    function renderCardGrid(list, containerId) {
+        const container = document.getElementById(containerId);
+        if(!container) return;
+
+        container.innerHTML = (list || []).map(s => `
+                <div class="col">
+                    <div class="custom-card position-relative">
+                        <div class="position-relative mb-2">
+                            <img src="${s.coverImage || 'https://placehold.co/300'}" class="w-100 rounded shadow-sm">
+                            <div class="play-btn-hover" onclick="playSong(${s.songId})">
+                                <i class="bi bi-play-fill"></i>
+                            </div>
+                        </div>
+                        <div onclick="window.location.href='/song-detail.html?id=${s.songId}'" class="cursor-pointer">
+                            <h6 class="text-white text-truncate fw-bold">${s.title}</h6>
+                            <small class="text-white-50">${s.artist?.name || 'Unknown'}</small>
+                        </div>
+                    </div>
+                </div>`).join('');
+    }
+
+    function playSong(songId) {
+        fetch(`${API}/history?userId=${USER_ID}&songId=${songId}`, {method: 'POST'});
+        // Update player UI (if exists)
+        const playerTitle = document.getElementById('player-title');
+        if(playerTitle) {
+            // Fetch song details and update player
+        }
+    }
+
+    function refreshRecommendations() {
+        document.getElementById('daily-mix-list').innerHTML = '<div class="col"><div class="spinner-border text-success"></div></div>';
+        document.getElementById('trending-list').innerHTML = '';
+        document.getElementById('discovery-list').innerHTML = '';
+        loadForYouData();
+    }
+
+    function showError() {
+        const containers = ['daily-mix-list', 'trending-list', 'discovery-list'];
+        containers.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.innerHTML = '<div class="col-12 text-center text-muted py-4">Không thể tải dữ liệu</div>';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadForYouData);
+</script>
+<script src="/js/global-player.js"></script>
+</body>
+</html>
