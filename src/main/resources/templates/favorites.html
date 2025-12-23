@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Bài hát yêu thích</title>
+</head>
+
+<th:block layout:fragment="extra-css">
+    <style>
+        /* 1. Ẩn thanh music player */
+        #musicPlayer {
+            display: none !important;
+        }
+
+        /* 2. Xóa khoảng trống thừa dưới chân trang (do layout gốc để chừa chỗ cho player) */
+        body {
+            padding-bottom: 0 !important;
+        }
+        .fav-header { background: linear-gradient(135deg, #4b1050, #220526); padding: 40px; border-radius: 15px; display: flex; align-items: center; gap: 30px; margin-bottom: 30px; }
+        .fav-cover { width: 180px; height: 180px; background: linear-gradient(45deg, #ff3366, #ff6b6b); box-shadow: 0 10px 30px rgba(255, 51, 102, 0.4); display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+        .fav-cover i { font-size: 4rem; color: white; }
+        .song-list-item { display: flex; align-items: center; padding: 10px 15px; border-radius: 8px; transition: 0.2s; border-bottom: 1px solid #333; }
+        .song-list-item:hover { background: rgba(255,255,255,0.1); }
+        .song-idx { width: 40px; text-align: center; color: #888; }
+        .song-info-cell { flex: 1; display: flex; align-items: center; gap: 15px; }
+        .song-thumb { width: 45px; height: 45px; border-radius: 4px; object-fit: cover; }
+
+        a.song-title-link { color: white; text-decoration: none; font-weight: 500; }
+        a.song-title-link:hover { text-decoration: underline; color: var(--primary); }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="fav-header">
+        <div class="fav-cover"><i class="fas fa-heart"></i></div>
+        <div>
+            <span style="text-transform: uppercase; font-size: 0.9rem; font-weight: bold;">Playlist</span>
+            <h1 style="font-size: 3.5rem; font-weight: 800; margin: 5px 0;">Bài hát yêu thích</h1>
+            <p id="favCount" style="color: #ccc;">0 bài hát</p>
+            <button class="btn-login" style="padding: 12px 30px; font-size: 1.1rem; margin-top: 10px; cursor: pointer;" onclick="playAllFavorites()">
+                <i class="fas fa-play"></i> Phát tất cả
+            </button>
+        </div>
+    </div>
+
+    <div class="song-list-header" style="display: flex; padding: 10px 15px; color: #888; border-bottom: 1px solid #444; font-size: 0.9rem;">
+        <div style="width: 40px; text-align: center;">#</div>
+        <div style="flex: 1;">Tiêu đề</div>
+        <div style="width: 200px;">Album</div>
+        <div style="width: 120px;">Trạng thái</div>
+        <div style="width: 80px; text-align: center;">Phát</div>
+    </div>
+
+    <div id="favoritesList">
+        <div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>
+    </div>
+</div>
+
+<th:block layout:fragment="extra-js">
+    <script>
+        const USER_ID = 1; // Thymeleaf: [[${userId}]]
+        let favoriteSongs = [];
+
+        document.addEventListener('DOMContentLoaded', loadFavorites);
+
+        async function loadFavorites() {
+            try {
+                const res = await fetch(`/api/favorites/user/${USER_ID}`);
+                favoriteSongs = await res.json();
+                document.getElementById('favCount').innerText = `${favoriteSongs.length} bài hát`;
+
+                const container = document.getElementById('favoritesList');
+                if(favoriteSongs.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:50px; color:#888;">Bạn chưa thích bài hát nào.</div>';
+                    return;
+                }
+
+                container.innerHTML = favoriteSongs.map((song, index) => {
+                    const img = song.imageUrl || '/images/default.png';
+                    const artist = song.artistName || 'Unknown';
+                    const safeTitle = song.title.replace(/'/g, "\\'");
+                    const safeArtist = artist.replace(/'/g, "\\'");
+                    const safeUrl = song.musicUrl ? song.musicUrl.replace(/'/g, "\\'") : '';
+
+                    return `
+                    <div class="song-list-item">
+                        <div class="song-idx">${index + 1}</div>
+                        <div class="song-info-cell">
+                            <img src="${img}" class="song-thumb">
+                            <div>
+                                <div><a href="/songs/${song.songId}" class="song-title-link">${song.title}</a></div>
+                                <div style="font-size: 0.85rem; color: #888;">${artist}</div>
+                            </div>
+                        </div>
+                        <div style="width: 200px; color: #aaa; font-size: 0.9rem;">${song.albumTitle || '-'}</div>
+                        <div style="width: 120px; color: #aaa; font-size: 0.9rem;">Đã thích</div>
+                        <div style="width: 80px; text-align: center;">
+                             <button style="background:none; border:none; color:var(--primary); cursor:pointer;"
+                                onclick="playGlobalSong('${safeUrl}', '${safeTitle}', '${safeArtist}', '${img}')">
+                                <i class="fas fa-play"></i>
+                             </button>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function playAllFavorites() {
+            if(favoriteSongs.length > 0) {
+                const s = favoriteSongs[0];
+                const img = s.imageUrl || '/images/default.png';
+                playGlobalSong(s.musicUrl, s.title, s.artistName, img);
+            } else {
+                alert("Danh sách trống!");
+            }
+        }
+    </script>
+</th:block>
+</html>

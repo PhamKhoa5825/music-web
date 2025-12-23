@@ -104,6 +104,10 @@ public class SongService {
             song.setCoverImage(response.getUrl());
         }
 
+        if (request.getFilePath().isEmpty()) {
+            throw new RuntimeException("File audio cannot empty!");
+        }
+
         return songMapper.toSongResponse(songRepo.save(song));
     }
 

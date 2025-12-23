@@ -21,6 +21,7 @@ public class AdminController {
     public String showDashboard(Model model) {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("logs", logRepository.findAllByOrderByTimeDesc());
+        model.addAttribute("activeTab", "dashboard");
         return "admin/dashboard";
     }
 

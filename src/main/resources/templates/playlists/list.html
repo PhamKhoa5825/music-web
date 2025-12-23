@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Playlist của tôi</title>
+</head>
+
+<th:block layout:fragment="extra-css">
+    <style>
+        .playlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
+
+        /* Card container cần relative để nút xóa định vị theo nó */
+        .playlist-wrapper { position: relative; transition: 0.3s; }
+        .playlist-wrapper:hover { transform: translateY(-5px); }
+
+        .playlist-card {
+            background: #181818; padding: 15px; border-radius: 12px;
+            text-decoration: none; display: block; height: 100%;
+        }
+        .playlist-wrapper:hover .playlist-card { background: #282828; }
+
+        .playlist-cover { width: 100%; aspect-ratio: 1/1; background: #333; border-radius: 8px; margin-bottom: 15px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        .playlist-cover img { width: 100%; height: 100%; object-fit: cover; }
+        .pl-title { color: white; font-weight: bold; margin-bottom: 5px; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pl-desc { color: #888; font-size: 0.9rem; }
+
+        /* NÚT XÓA (Đã sửa để dễ thấy hơn) */
+        .btn-delete-pl {
+            position: absolute; top: 10px; right: 10px;
+            width: 35px; height: 35px; border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7); color: #ff4d4d;
+            border: 1px solid rgba(255, 77, 77, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 100; /* Nằm trên cùng */
+            transition: 0.2s; opacity: 0.8; /* Luôn hiện mờ */
+        }
+        .btn-delete-pl:hover { background: #ff4d4d; color: white; opacity: 1; transform: scale(1.1); }
+
+        /* Card Tạo mới */
+        .create-card { border: 2px dashed #444; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; height: 100%; min-height: 250px; }
+        .create-card:hover { border-color: var(--primary); background: rgba(0, 243, 255, 0.05); }
+        .create-icon { width: 50px; height: 50px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; color: var(--primary); font-size: 1.5rem; }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white fw-bold"><i class="fas fa-layer-group me-2"></i>Playlist của tôi</h2>
+    </div>
+
+    <div class="playlist-grid">
+        <a href="/playlists/create" class="playlist-card create-card text-decoration-none">
+            <div class="create-icon"><i class="fas fa-plus"></i></div>
+            <div class="text-white fw-bold">Tạo Playlist Mới</div>
+        </a>
+
+        <div th:each="pl : ${playlists}" class="playlist-wrapper">
+
+            <a th:href="@{/playlists/{id}(id=${pl.playlistId})}" class="playlist-card">
+                <div class="playlist-cover">
+                    <img th:if="${pl.imageUrl}" th:src="${pl.imageUrl}">
+                    <i th:unless="${pl.imageUrl}" class="fas fa-music text-secondary fs-1"></i>
+                </div>
+                <div class="pl-title" th:text="${pl.name}">Tên Playlist</div>
+                <div class="pl-desc">
+                    <span th:text="${pl.playlistSongs != null ? pl.playlistSongs.size() : 0} + ' bài hát'">0 bài</span>
+                </div>
+            </a>
+
+            <button class="btn-delete-pl" title="Xóa Playlist này"
+                    th:onclick="'deletePlaylist(event, ' + ${pl.playlistId} + ')'">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="extra-js">
+    <script>
+        function deletePlaylist(event, id) {
+            event.preventDefault(); // Chặn việc click vào thẻ A
+            if (confirm('Bạn có chắc chắn muốn xóa playlist này không?')) {
+                window.location.href = `/playlists/delete/${id}`;
+            }
+        }
+    </script>
+</th:block>
+</html>

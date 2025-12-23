@@ -51,6 +51,7 @@ public class AdminMusicController {
 
         model.addAttribute("currentTab", tab);
         model.addAttribute("search", search);
+        model.addAttribute("activeTab", "manager");
 
         return "admin/manager";
     }

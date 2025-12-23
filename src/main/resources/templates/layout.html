@@ -6,7 +6,26 @@
     <title th:text="${pageTitle} ?: 'Music App'">Music App</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+        html {
+            overflow-y: scroll;
+        }
+
+        :root {
+            --primary: #00f3ff;
+            --bg-dark: #0a0a0a;
+            --bg-sidebar: #000000;
+            --bg-card: #111111;
+            --text-main: #ffffff;
+            --text-gray: #b3b3b3;
+            --border-color: #333;
+
+            /* Kích thước chung */
+            --sidebar-width: 250px;
+            --player-height: 90px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -17,25 +36,74 @@
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background-color: #050505;
 
-            /* 2. Tạo các đốm sáng bằng radial-gradient */
+            /* Hiệu ứng nền của bạn (Giữ nguyên) */
             background-image:
-                /* Đốm sáng chính (màu Teal của bạn) ở góc trên bên trái */
                     radial-gradient(at 0% 0%, rgba(1, 109, 110, 0.3) 0px, transparent 50%),
-
-                        /* Đốm sáng phụ (màu tối hơn hoặc màu khác để tạo độ sâu) ở góc dưới phải */
                     radial-gradient(at 100% 0%, rgba(1, 60, 60, 0.5) 0px, transparent 50%),
-
-                        /* Một chút ánh sáng nhẹ ở giữa để không bị tối om */
                     radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.02) 0px, transparent 50%);
-
-            /* 3. Cố định background để khi cuộn trang nó không bị trượt */
             background-attachment: fixed;
             background-size: 100% 100%;
-            padding-bottom: 120px;
 
             min-height: 100vh;
-            color: white; /* Màu chữ mặc định */
+            color: white;
         }
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-sidebar);
+            padding: 24px;
+
+            /* --- SỬA ĐOẠN NÀY --- */
+            position: fixed;
+            top: 0;             /* Neo chặt lên đỉnh */
+            left: 0;            /* Neo chặt sang trái */
+            height: 100vh;      /* QUAN TRỌNG: Chỉ lấy 100% chiều cao màn hình */
+            overflow-y: auto;   /* Nếu nội dung dài quá màn hình, cho phép cuộn riêng sidebar */
+            /* -------------------- */
+
+            border-right: 1px solid var(--border-color);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: var(--text-gray);
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item.active {
+            border-left: 3px solid var(--primary);
+        }
+        .menu-icon { margin-right: 15px; font-size: 20px; width: 25px; text-align: center; }
+
+        .library-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+        .lib-title { font-size: 12px; text-transform: uppercase; color: var(--text-gray); margin-bottom: 15px;}
+
+
 
 
 
@@ -60,12 +128,16 @@
         }
 
         .navbar-brand {
+            display: flex;
+            justify-content: center; /* Quan trọng: Canh giữa nội dung */
+            align-items: center;
+            width: 100%;             /* Quan trọng: Để nó biết tâm của Sidebar ở đâu */
+            margin-bottom: 40px;
+
             font-size: 1.5rem;
             font-weight: 700;
             color: #E0FFFF;
             text-decoration: none;
-            display: flex;
-            align-items: center;
             gap: 0.5rem;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-shadow: 0 2px 10px rgba(224, 255, 255, 0.3);
@@ -123,9 +195,21 @@
         }
 
         .main-content {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
+            /* 1. Đẩy nội dung sang phải bằng đúng chiều rộng Sidebar */
+            margin-left: var(--sidebar-width);
+
+            /* 2. Tính toán chiều rộng còn lại */
+            width: calc(100% - var(--sidebar-width));
+
+            /* 3. Padding để nội dung không dính sát lề */
+            padding: 30px 40px;
+
+            /* 4. Đảm bảo nội dung không bị thanh player che mất ở dưới cùng */
+            padding-bottom: calc(var(--player-height) + 20px);
+
+            /* 5. (Tùy chọn) Nếu muốn nội dung bên trong luôn căn giữa màn hình hiển thị */
+            /* max-width: 1200px; */
+            /* margin-right: auto; */
         }
 
         /* --- MUSIC PLAYER BAR CSS --- */
@@ -624,6 +708,7 @@
             font-size: 1.2rem;
         }
 
+
         /* Keyframes */
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
@@ -636,32 +721,85 @@
         }
     </style>
     <th:block layout:fragment="extra-css"></th:block>
-<body hx-boost="true"
-      hx-target="#main-content"
-      hx-select="#main-content"
-      hx-swap="outerHTML show:top">
+</head>
+<body>
 
-<div id="toast-container"></div>
-<input type="hidden" id="serverSuccessMsg" th:value="${successMessage}">
-<input type="hidden" id="serverErrorMsg" th:value="${errorMessage}">
+<div class="sidebar">
 
-<nav class="navbar">
-    <div class="navbar-container">
-        <a class="navbar-brand"><i class="fas fa-music"></i> Music App</a>
-        <ul class="navbar-menu">
-            <li class="navbar-item"><a href="/songs">Songs</a></li>
-            <li class="navbar-item"><a href="/admin/manager" hx-boost="false">Admin</a></li>
-        </ul>
+    <a class="navbar-brand" style="; display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-music"></i> Music App
+    </a>
+
+
+    <a href="/" class="menu-item" th:classappend="${activeTab == 'home'} ? 'active'">
+        <i class="fas fa-home menu-icon"></i> Khám Phá
+    </a>
+
+    <a href="/ranking" class="menu-item" th:classappend="${activeTab == 'ranking'} ? 'active'">
+        <i class="fas fa-chart-line menu-icon"></i> Bảng Xếp Hạng
+    </a>
+
+    <a href="/gemini" class="menu-item" th:classappend="${activeTab == 'ai-dj'} ? 'active'">
+        <i class="fas fa-robot menu-icon"></i> Gợi ý bài hát
+    </a>
+
+    <div class="library-section">
+        <div class="lib-title">Thư viện</div>
+
+        <a href="/history" class="menu-item" th:classappend="${activeTab == 'history'} ? 'active'">
+            <i class="fas fa-history menu-icon"></i> Nghe gần đây
+        </a>
+
+        <a href="/favorites" class="menu-item" th:classappend="${activeTab == 'favorites'} ? 'active'">
+            <i class="fas fa-heart menu-icon"></i> Bài hát yêu thích
+        </a>
+
+        <a href="/playlists" class="menu-item" th:classappend="${activeTab == 'playlists'} ? 'active'">
+            <i class="fas fa-list menu-icon"></i> Playlist của tôi
+        </a>
+
+        <a th:if="${isAdmin}" href="/admin/dashboard" class="menu-item" th:classappend="${activeTab == 'dashboard'} ? 'active'">
+            <i class="fas fa-chart-line menu-icon"></i> Dashboard
+        </a>
+
+        <a href="/songs" class="menu-item" th:classappend="${activeTab == 'songs'} ? 'active'">
+            <i class="fas fa-compact-disc menu-icon"></i> Music
+        </a>
+
+        <a th:if="${isAdmin}" href="/admin/manager" class="menu-item" th:classappend="${activeTab == 'manager'} ? 'active'">
+            <i class="fas fa-sliders-h menu-icon"></i> Music Manager
+        </a>
+
+        <a href="/profile" class="menu-item" th:classappend="${activeTab == 'profile'} ? 'active'">
+            <i class="fas fa-user-circle menu-icon"></i> My Profile
+        </a>
+
+        <div style="flex: 1;"></div>
+
+        <a th:if="${isLoggedIn}" href="/logout" class="menu-item">
+            <i class="fas fa-sign-out-alt menu-icon"></i> Logout
+        </a>
     </div>
-</nav>
 
-<div class="music-player" id="musicPlayer" style="display: flex;" >
-    <audio id="audioPlayer"></audio>
+
+
+</div>
+
+<div class="main-content">
+    <div layout:fragment="content"></div>
+</div>
+
+
+
+<div class="music-player" id="musicPlayer" style="display: flex;"> <audio id="audioPlayer"></audio>
 
     <div class="player-container">
         <div class="player-info">
             <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                 alt="" class="player-cover player-img" id="playerCover">
+                 alt=""
+                 class="player-cover player-img"
+                 id="playerCover">
+
             <div class="player-details">
                 <h4 id="playerTitle" class="player-title">Select a song</h4>
                 <p id="playerArtist" class="player-artist">-</p>
@@ -672,12 +810,15 @@
             <div class="controls-buttons">
                 <button class="control-btn" id="shuffleBtn"><i class="fas fa-random"></i></button>
                 <button class="control-btn" id="prevBtn"><i class="fas fa-step-backward"></i></button>
+
                 <button class="control-btn play-pause" id="playPauseBtn" onclick="togglePlay()">
                     <i class="fas fa-play"></i>
                 </button>
+
                 <button class="control-btn" id="nextBtn"><i class="fas fa-step-forward"></i></button>
                 <button class="control-btn" id="repeatBtn"><i class="fas fa-redo"></i></button>
             </div>
+
             <div class="progress-container">
                 <span class="progress-time" id="currentTime">0:00</span>
                 <div class="progress-bar" id="progressBar">
@@ -689,7 +830,8 @@
 
         <div class="player-extras">
             <div class="volume-control">
-                <i class="fas fa-volume-up" id="volumeIcon"></i>
+                <i class="fas fa-volume-up" id="volumeIcon" style="cursor: pointer; width: 20px;"></i>
+
                 <div class="volume-slider" id="volumeSlider">
                     <div class="volume-fill" id="volumeFill" style="width: 100%;"></div>
                 </div>
@@ -698,325 +840,319 @@
     </div>
 </div>
 
-<div id="main-content" layout:fragment="content" style="padding-bottom: 100px;" hx-history-elt></div>
 
-<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
 <script>
-    /* =========================================
-       PHẦN 1: CÁC HÀM GLOBAL (GỌI TỪ HTML)
-       ========================================= */
+    // 1. Lấy thẻ Audio và biến trạng thái
+    var audio = document.getElementById('audioPlayer');
+    var isPlaying = false;
 
-    // 1. Hàm phát nhạc khi click vào bài hát (Từ trang List/Detail)
-    window.playMusic = function(url, title, artist, img) {
-        const audio = document.getElementById('audioPlayer');
-        const playerTitle = document.getElementById('playerTitle');
-        const playerArtist = document.getElementById('playerArtist');
-        const playerCover = document.getElementById('playerCover');
-
-        if (!audio) return;
-
-        // Nếu bài mới khác bài cũ thì mới load lại
-        if (decodeURI(audio.src) !== decodeURI(url)) {
-            audio.src = url;
-            if(playerTitle) playerTitle.innerText = title;
-            if(playerArtist) playerArtist.innerText = artist;
-
-            // Xử lý ảnh bìa
-            const defaultCover = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-            if(playerCover) {
-                playerCover.src = (img && img.trim() !== "") ? img : defaultCover;
-            }
-
-            // Play
-            audio.load();
-            audio.play().catch(e => console.error("Lỗi phát nhạc:", e));
-        } else {
-            // Nếu bấm vào bài đang hát -> Toggle Play/Pause
-            togglePlay();
-        }
+    // 2. LẮNG NGHE SỰ KIỆN TỰ ĐỘNG (Sửa lỗi của bạn tại đây)
+    // Hễ nhạc bắt đầu chạy -> Tự động đổi icon thành Pause
+    audio.onplay = function() {
+        isPlaying = true;
+        updateIcon(true);
     };
 
-    // 2. Hàm Toggle Play/Pause (Nút Play to ở giữa)
-    window.togglePlay = function() {
-        const audio = document.getElementById('audioPlayer');
-        if (!audio) return;
+    // Hễ nhạc dừng -> Tự động đổi icon thành Play
+    audio.onpause = function() {
+        isPlaying = false;
+        updateIcon(false);
+    };
+
+    // Hễ nhạc hết -> Tự động đổi icon thành Play
+    audio.onended = function() {
+        isPlaying = false;
+        updateIcon(false);
+    };
+
+    // 3. Hàm bật/tắt nhạc khi bấm nút ở thanh player
+    function togglePlay() {
+        if (!audio.src || audio.src === "") return;
 
         if (audio.paused) {
             audio.play();
+            // Không cần gọi updateIcon(true) ở đây nữa vì audio.onplay sẽ tự lo
         } else {
             audio.pause();
-        }
-        // Icon sẽ tự đổi nhờ sự kiện onplay/onpause bên dưới
-    };
-
-    // 3. Hàm Toast Notification
-    window.showToast = function(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-
-        toast.innerHTML = `
-            <div style="display:flex; align-items:center; gap:12px;">
-                <i class="fas ${iconClass}"></i>
-                <span>${message}</span>
-            </div>
-        `;
-
-        container.appendChild(toast);
-        // Tự động xóa
-        setTimeout(() => {
-            toast.style.animation = 'slideOut 0.5s forwards';
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
-    };
-
-    // Hàm kiểm tra tin nhắn từ Server (Dùng chung)
-    function checkServerMessage() {
-        const successInput = document.getElementById('serverSuccessMsg');
-        const errorInput = document.getElementById('serverErrorMsg');
-
-        // Kiểm tra Success
-        if (successInput && successInput.value.trim() !== "") {
-            showToast(successInput.value, 'success');
-            successInput.value = ""; // Xóa ngay để tránh hiện lại khi cache
-        }
-
-        // Kiểm tra Error
-        if (errorInput && errorInput.value.trim() !== "") {
-            showToast(errorInput.value, 'error');
-            errorInput.value = "";
+            // Không cần gọi updateIcon(false) ở đây nữa vì audio.onpause sẽ tự lo
         }
     }
 
-    /* =========================================
-       PHẦN 2: HÀM KHỞI TẠO (CHẠY LẠI KHI CẦN)
-       ========================================= */
-
-    function initMusicPlayer() {
-        console.log("Đang khởi tạo lại Music Player Events...");
-
-        const audio = document.getElementById('audioPlayer');
-        if (!audio) return;
-
-        // --- A. XỬ LÝ SỰ KIỆN AUDIO CƠ BẢN ---
-
-        // Cập nhật Icon Play/Pause
-        function updatePlayIcon(isPlaying) {
-            const icon = document.querySelector("#playPauseBtn i");
-            if(icon) {
-                icon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+    // 4. Hàm cập nhật hình ảnh Icon
+    function updateIcon(playing) {
+        const icon = document.querySelector("#playPauseBtn i");
+        if(icon) {
+            if(playing) {
+                // Đang phát -> Hiện nút Pause (2 gạch)
+                icon.classList.remove('fa-play');
+                icon.classList.add('fa-pause');
+            } else {
+                // Đang dừng -> Hiện nút Play (tam giác)
+                icon.classList.remove('fa-pause');
+                icon.classList.add('fa-play');
             }
-        }
-
-        audio.onplay = () => updatePlayIcon(true);
-        audio.onpause = () => updatePlayIcon(false);
-        audio.onended = () => updatePlayIcon(false);
-
-        // Hiển thị tổng thời gian khi load metadata
-        audio.onloadedmetadata = function() {
-            const totalTimeEl = document.getElementById('totalTime');
-            if(totalTimeEl && audio.duration) {
-                totalTimeEl.textContent = formatTime(audio.duration);
-            }
-        };
-
-        // Cập nhật Time + Progress Bar (Chỉ khi không kéo chuột)
-        let isDragging = false;
-        audio.ontimeupdate = function() {
-            if (!isDragging) {
-                const currentTimeEl = document.getElementById('currentTime');
-                const progressFill = document.getElementById('progressFill');
-
-                if(currentTimeEl) currentTimeEl.textContent = formatTime(audio.currentTime);
-
-                if (progressFill && audio.duration) {
-                    const percent = (audio.currentTime / audio.duration) * 100;
-                    progressFill.style.width = percent + "%";
-                }
-            }
-        };
-
-        // --- B. XỬ LÝ THANH TIẾN TRÌNH (Reset Event Listener bằng cloneNode) ---
-        const progressBar = document.getElementById('progressBar');
-        if (progressBar) {
-            // Clone để xóa sự kiện cũ (tránh lỗi zombie event khi back trang)
-            const newProgressBar = progressBar.cloneNode(true);
-            progressBar.parentNode.replaceChild(newProgressBar, progressBar);
-
-            // Gán lại sự kiện mới
-            newProgressBar.addEventListener('mousedown', function(e) {
-                isDragging = true;
-                updateDrag(e, newProgressBar);
-            });
-
-            document.addEventListener('mousemove', function(e) {
-                if (isDragging) updateDrag(e, newProgressBar);
-            });
-
-            document.addEventListener('mouseup', function(e) {
-                if (isDragging) {
-                    isDragging = false;
-                    const rect = newProgressBar.getBoundingClientRect();
-                    const clickX = e.clientX - rect.left;
-                    const width = rect.width;
-                    if (audio.duration) {
-                        let newTime = (clickX / width) * audio.duration;
-                        // Clamp value
-                        newTime = Math.max(0, Math.min(newTime, audio.duration));
-                        audio.currentTime = newTime;
-                    }
-                }
-            });
-        }
-
-        // --- C. XỬ LÝ VOLUME (Reset Event Listener) ---
-        const volumeSlider = document.getElementById('volumeSlider');
-        if (volumeSlider) {
-            const newVolSlider = volumeSlider.cloneNode(true);
-            volumeSlider.parentNode.replaceChild(newVolSlider, volumeSlider);
-
-            newVolSlider.addEventListener('click', function(e) {
-                const rect = this.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                let percent = clickX / rect.width;
-                percent = Math.max(0, Math.min(percent, 1)); // Clamp 0-1
-
-                audio.volume = percent;
-            });
-        }
-
-        // Sync giao diện Volume
-        audio.onvolumechange = function() {
-            const volumeFill = document.getElementById('volumeFill');
-            const volumeIcon = document.getElementById('volumeIcon');
-
-            if(volumeFill) volumeFill.style.width = (audio.volume * 100) + "%";
-
-            if(volumeIcon) {
-                if(audio.muted || audio.volume === 0) volumeIcon.className = 'fas fa-volume-mute';
-                else if (audio.volume < 0.5) volumeIcon.className = 'fas fa-volume-down';
-                else volumeIcon.className = 'fas fa-volume-up';
-            }
-        };
-
-        // Icon Mute/Unmute
-        const volumeIcon = document.getElementById('volumeIcon');
-        if(volumeIcon) {
-            // Clone nút volume icon luôn cho chắc
-            const newVolIcon = volumeIcon.cloneNode(true);
-            volumeIcon.parentNode.replaceChild(newVolIcon, volumeIcon);
-
-            // Biến static giả lập để nhớ volume cũ
-            if (!window.lastVolume) window.lastVolume = 1;
-
-            newVolIcon.addEventListener('click', function() {
-                if (audio.muted || audio.volume === 0) {
-                    audio.muted = false;
-                    audio.volume = window.lastVolume || 1;
-                } else {
-                    window.lastVolume = audio.volume;
-                    audio.muted = true;
-                    audio.volume = 0;
-                }
-            });
-        }
-
-        // --- D. XỬ LÝ NÚT REPEAT ---
-        const repeatBtn = document.getElementById('repeatBtn');
-        if (repeatBtn) {
-            const newRepeatBtn = repeatBtn.cloneNode(true);
-            repeatBtn.parentNode.replaceChild(newRepeatBtn, repeatBtn);
-
-            // Khôi phục trạng thái visual từ audio.loop
-            if(audio.loop) newRepeatBtn.classList.add('active');
-
-            newRepeatBtn.addEventListener('click', function() {
-                audio.loop = !audio.loop;
-                if (audio.loop) {
-                    this.classList.add('active');
-                    showToast("Repeat On", "success");
-                } else {
-                    this.classList.remove('active');
-                    showToast("Repeat Off", "success");
-                }
-            });
-        }
-
-        // --- E. CÁC NÚT ĐIỀU KHIỂN KHÁC (Shuffle, Prev, Next) ---
-        // Bạn có thể thêm tương tự ở đây...
-    }
-
-    // Hàm hỗ trợ kéo thả Progress Bar
-    function updateDrag(e, barElement) {
-        const progressFill = document.getElementById('progressFill');
-        const currentTimeEl = document.getElementById('currentTime');
-        const audio = document.getElementById('audioPlayer');
-
-        const rect = barElement.getBoundingClientRect();
-        let clickX = e.clientX - rect.left;
-        let width = rect.width;
-
-        // Clamp
-        if (clickX < 0) clickX = 0;
-        if (clickX > width) clickX = width;
-
-        const percent = (clickX / width) * 100;
-        if(progressFill) progressFill.style.width = percent + "%";
-
-        if (audio && audio.duration) {
-            const tempTime = (clickX / width) * audio.duration;
-            if(currentTimeEl) currentTimeEl.textContent = formatTime(tempTime);
         }
     }
 
-    // Hàm format thời gian (00:00)
+
+
+    // --- BỔ SUNG LOGIC THANH TIẾN TRÌNH ---
+
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalTimeEl = document.getElementById('totalTime');
+
+    // 1. Sự kiện khi trình duyệt tải được thông tin file nhạc (để lấy tổng thời lượng)
+    audio.addEventListener('loadedmetadata', function() {
+        if (audio.duration && !isNaN(audio.duration)) {
+            totalTimeEl.textContent = formatTime(audio.duration);
+        }
+    });
+
+    // 2. Sự kiện cập nhật liên tục khi nhạc đang chạy
+    audio.addEventListener('timeupdate', function() {
+        // Cập nhật thời gian hiện tại
+        if(audio.currentTime) {
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+        }
+
+        // Cập nhật thanh chạy (Progress Bar)
+        if (audio.duration) {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = percent + "%";
+        }
+    });
+
+    // 3. Sự kiện bấm vào thanh tiến trình để tua (Seek)
+    if (progressBar) {
+        progressBar.addEventListener('click', function(e) {
+            if (!audio.src) return; // Nếu chưa có bài hát thì không làm gì
+
+            const width = this.clientWidth; // Chiều rộng tổng của thanh
+            const clickX = e.offsetX; // Vị trí click
+            const duration = audio.duration; // Tổng thời lượng
+
+            if (duration) {
+                // Tính toán thời gian mới
+                audio.currentTime = (clickX / width) * duration;
+            }
+        });
+    }
+
+    // 4. Hàm định dạng giây sang phút:giây (Ví dụ: 125s -> 02:05)
     function formatTime(seconds) {
         if (!seconds || isNaN(seconds)) return "0:00";
+
         const minutes = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
-    /* =========================================
-       PHẦN 3: KÍCH HOẠT (EVENTS)
-       ========================================= */
+    // --- LOGIC THANH TIẾN TRÌNH (CÓ KÉO THẢ) ---
 
-    // 1. Chạy khi load trang lần đầu
+    var isDragging = false; // Biến kiểm tra xem có đang giữ chuột không
+
+    // 1. Cập nhật thanh chạy khi nhạc đang phát (Chỉ cập nhật khi KHÔNG kéo)
+    audio.addEventListener('timeupdate', function() {
+        if (!isDragging) { // Nếu đang kéo thì không để nhạc tự cập nhật giao diện, tránh giật
+            if(audio.currentTime) {
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+            }
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = percent + "%";
+            }
+        }
+    });
+
+    // 2. Xử lý sự kiện KÉO THẢ (Drag)
+    if (progressBar) {
+
+        // Khi bấm chuột xuống thanh tiến trình
+        progressBar.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            updateProgress(e); // Cập nhật ngay vị trí click
+        });
+
+        // Khi di chuyển chuột (trong lúc đang giữ chuột)
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                updateProgress(e);
+            }
+        });
+
+        // Khi thả chuột ra
+        document.addEventListener('mouseup', function(e) {
+            if (isDragging) {
+                isDragging = false;
+                // Lúc thả tay ra mới chính thức tua nhạc đến vị trí đó
+                const width = progressBar.clientWidth;
+                const clickX = e.clientX - progressBar.getBoundingClientRect().left;
+                const duration = audio.duration;
+
+                if (duration) {
+                    // Giới hạn clickX không ra ngoài thanh
+                    let newTime = (clickX / width) * duration;
+                    if(newTime < 0) newTime = 0;
+                    if(newTime > duration) newTime = duration;
+
+                    audio.currentTime = newTime;
+                }
+            }
+        });
+    }
+
+    // Hàm tính toán vị trí và hiển thị giao diện khi kéo
+    function updateProgress(e) {
+        const width = progressBar.clientWidth;
+        // Tính vị trí chuột so với thanh progressBar
+        let clickX = e.clientX - progressBar.getBoundingClientRect().left;
+
+        // Giới hạn không cho kéo ra ngoài thanh
+        if (clickX < 0) clickX = 0;
+        if (clickX > width) clickX = width;
+
+        const percent = (clickX / width) * 100;
+        progressFill.style.width = percent + "%";
+
+        // Cập nhật số giây hiển thị tạm thời khi đang kéo
+        if (audio.duration) {
+            const tempTime = (clickX / width) * audio.duration;
+            currentTimeEl.textContent = formatTime(tempTime);
+        }
+    }
+    // --- LOGIC VOLUME CONTROL ---
+
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeFill = document.getElementById('volumeFill');
+    const volumeIcon = document.getElementById('volumeIcon');
+    let lastVolume = 1; // Lưu lại volume trước khi mute để khôi phục
+
+    // 1. Xử lý khi click vào thanh Volume để chỉnh to nhỏ
+    if (volumeSlider) {
+        volumeSlider.addEventListener('click', function(e) {
+            const rect = this.getBoundingClientRect();
+            const width = rect.width;
+            let clickX = e.clientX - rect.left;
+
+            // Giới hạn
+            if(clickX < 0) clickX = 0;
+            if(clickX > width) clickX = width;
+
+            // Tính phần trăm (0 đến 1)
+            const percent = clickX / width;
+
+            // Cập nhật Audio
+            audio.volume = percent;
+
+            // (Giao diện sẽ tự cập nhật nhờ sự kiện volumechange bên dưới)
+        });
+    }
+
+    // 2. Lắng nghe sự kiện thay đổi volume của Audio (Đồng bộ giao diện)
+    audio.addEventListener('volumechange', function() {
+        // Cập nhật thanh trượt
+        const percent = audio.volume * 100;
+        if(volumeFill) volumeFill.style.width = percent + "%";
+
+        // Cập nhật Icon (Loa to, Loa nhỏ, Mute)
+        if(audio.muted || audio.volume === 0) {
+            volumeIcon.className = 'fas fa-volume-mute';
+        } else if (audio.volume < 0.5) {
+            volumeIcon.className = 'fas fa-volume-down';
+        } else {
+            volumeIcon.className = 'fas fa-volume-up';
+        }
+    });
+
+    // 3. Xử lý khi bấm vào Icon Loa (Bật/Tắt Mute)
+    if (volumeIcon) {
+        volumeIcon.addEventListener('click', function() {
+            if (audio.muted || audio.volume === 0) {
+                // Đang tắt -> Bật lại
+                audio.muted = false;
+                audio.volume = lastVolume || 1; // Khôi phục mức cũ
+            } else {
+                // Đang bật -> Tắt đi
+                lastVolume = audio.volume; // Lưu mức hiện tại
+                audio.muted = true;
+                audio.volume = 0; // Kéo về 0 cho chắc
+            }
+        });
+    }
+    // --- LOGIC NÚT REPEAT (LẶP LẠI) ---
+
+    const repeatBtn = document.getElementById('repeatBtn');
+    let isRepeat = false; // Biến theo dõi trạng thái
+
+    if (repeatBtn) {
+        repeatBtn.addEventListener('click', function() {
+            // 1. Đảo ngược trạng thái (Tắt -> Bật, Bật -> Tắt)
+            isRepeat = !isRepeat;
+
+            // 2. Cập nhật thuộc tính loop của thẻ Audio
+            // Nếu isRepeat = true thì audio sẽ tự động phát lại khi hết bài
+            audio.loop = isRepeat;
+
+            // 3. Cập nhật giao diện (Thêm/Xóa class active)
+            if (isRepeat) {
+                repeatBtn.classList.add('active');
+                // (Tùy chọn) Hiện thông báo nhỏ
+                // showNotification("Đã bật lặp lại bài hát", "success");
+            } else {
+                repeatBtn.classList.remove('active');
+                // showNotification("Đã tắt lặp lại", "success");
+            }
+        });
+    }
+    /* --- TOAST NOTIFICATION LOGIC --- */
+
+    // 1. Hàm hiển thị thông báo (Global function)
+    // type: 'success' hoặc 'error'
+    window.showToast = function(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+
+        // Tạo element thông báo
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        // Icon tương ứng
+        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+        toast.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px;">
+            <i class="fas ${iconClass}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+        // Thêm vào giao diện
+        container.appendChild(toast);
+
+        // Tự động xóa khỏi DOM sau 3.5s (3s hiện + 0.5s fadeOut)
+        setTimeout(() => {
+            toast.remove();
+        }, 3500);
+    };
+
+    // 2. Tự động check tin nhắn từ Server khi load trang
     document.addEventListener('DOMContentLoaded', function() {
-        initMusicPlayer();
+        const successMsg = document.getElementById('serverSuccessMsg').value;
+        const errorMsg = document.getElementById('serverErrorMsg').value;
 
-        // Check thông báo Server gửi về
-        const successMsg = document.getElementById('serverSuccessMsg')?.value;
-        const errorMsg = document.getElementById('serverErrorMsg')?.value;
-        if (successMsg) showToast(successMsg, 'success');
-        if (errorMsg) showToast(errorMsg, 'error');
+        if (successMsg && successMsg.trim() !== "") {
+            showToast(successMsg, 'success');
+        }
+
+        if (errorMsg && errorMsg.trim() !== "") {
+            showToast(errorMsg, 'error');
+        }
     });
-
-    // 2. Chạy sau khi HTMX đổi trang (Swap)
-    document.body.addEventListener('htmx:afterSwap', function(event) {
-        window.scrollTo(0, 0);
-        // Không cần gọi initMusicPlayer ở đây nếu dùng hx-preserve,
-        // nhưng nếu layout bị render lại thì cần.
-    });
-
-    // 3. QUAN TRỌNG: Chạy khi bấm nút Back (Restore History)
-    // Delay 100ms để DOM ổn định rồi mới gán lại sự kiện
-    document.body.addEventListener('htmx:historyRestore', function() {
-        setTimeout(initMusicPlayer, 100);
-    });
-
-    // 4. Xử lý lỗi HTMX
-    document.body.addEventListener('htmx:responseError', function(event) {
-        showToast("Lỗi kết nối: " + event.detail.xhr.status, "error");
-    });
-
-
 </script>
 
 <th:block layout:fragment="extra-js"></th:block>
+
 </body>
 </html>

@@ -131,7 +131,9 @@
             </div>
         </div>
     </div>
+</div>
 
+<th:block layout:fragment="extra-css">
     <style>
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -442,6 +444,8 @@
             display: flex;
             gap: 0.5rem;
             padding-left: 40%;
+            align-items: center;
+
         }
 
         .pagination-btn {
@@ -556,7 +560,9 @@
             }
         }
     </style>
+</th:block>
 
+<th:block layout:fragment="extra-js">
     <script th:inline="javascript">
         // Lấy dữ liệu bài hát từ server
         const songsData = /*[[${songs.content}]]*/ [];
@@ -674,13 +680,5 @@
             window.location = url;
         }
     </script>
-</div>
-
-<th:block layout:fragment="extra-css">
-
-</th:block>
-
-<th:block layout:fragment="extra-js">
-
 </th:block>
 </html>

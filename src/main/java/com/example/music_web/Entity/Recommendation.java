@@ -2,9 +2,17 @@ package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
+@Table(name = "recommendations")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Recommendation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

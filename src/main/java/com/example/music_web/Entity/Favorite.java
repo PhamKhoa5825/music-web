@@ -2,12 +2,19 @@ package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "favorites", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "song_id"})
 })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Favorite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,35 +31,13 @@ public class Favorite {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    public Long getId() {
-        return id;
-    }
+    // --- BỔ SUNG TRƯỜNG NÀY ĐỂ SỬA LỖI ---
+    @Column(name = "liked_at")
+    private LocalDateTime likedAt;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Song getSong() {
-        return song;
-    }
-
-    public void setSong(Song song) {
-        this.song = song;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    // Tự động gán thời gian khi tạo mới
+    @PrePersist
+    protected void onCreate() {
+        this.likedAt = LocalDateTime.now();
     }
 }

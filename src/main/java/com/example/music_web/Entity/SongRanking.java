@@ -1,12 +1,19 @@
 package com.example.music_web.Entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "song_rankings", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"ranking_date", "song_id"})
 })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class SongRanking {
 
     @Id
