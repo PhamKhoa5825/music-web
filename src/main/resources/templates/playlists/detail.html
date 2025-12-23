@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title th:text="${playlist.name}">Chi tiết Playlist</title>
+</head>
+
+<th:block layout:fragment="extra-css">
+    <style>
+        /* 1. Ẩn thanh music player */
+        #musicPlayer {
+            display: none !important;
+        }
+
+        /* 2. Xóa khoảng trống thừa dưới chân trang (do layout gốc để chừa chỗ cho player) */
+        body {
+            padding-bottom: 0 !important;
+        }
+        /* Reset đè style của layout để không bị vỡ */
+        .ai-wrapper {
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            background-color: transparent; /* Nền trong suốt để ăn theo layout */
+        }
+        /* CSS Giữ nguyên giao diện đẹp của bạn */
+        .pl-header {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), #0a0a0a),
+            url('${playlist.backgroundImage}');
+            background-size: cover;
+            padding: 40px; border-radius: 16px; margin-bottom: 30px; display: flex; gap: 30px; align-items: flex-end;
+            position: relative; overflow: hidden; border: 1px solid #333;
+        }
+        .pl-cover { width: 230px; height: 230px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); object-fit: cover; flex-shrink: 0; }
+        .pl-info { flex: 1; z-index: 2; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+        .pl-info h1 { font-size: 4rem; font-weight: 800; margin-bottom: 10px; line-height: 1; color: white; }
+
+        .song-table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
+        .song-table th { color: #aaa; font-weight: 400; padding: 10px; border-bottom: 1px solid #333; font-size: 0.85rem; text-transform: uppercase; }
+        .song-row { transition: 0.2s; cursor: pointer; }
+        .song-row:hover { background-color: rgba(255,255,255,0.1); border-radius: 5px; }
+        .song-row td { padding: 10px; vertical-align: middle; color: #ddd; }
+        .song-img { width: 45px; height: 45px; border-radius: 4px; object-fit: cover; margin-right: 15px; }
+
+        .btn-action { background: transparent; border: none; color: #aaa; padding: 8px; border-radius: 50%; transition: 0.2s; }
+        .btn-action:hover { color: white; background: rgba(255,255,255,0.1); }
+        .btn-remove:hover { color: #ff4d4d; background: rgba(255, 77, 77, 0.1); }
+
+        /* SEARCH SECTION (Đã sửa lại đẹp hơn) */
+        .search-area {
+            background: #181818;
+            padding: 30px; /* Tăng khoảng cách lề */
+            border-radius: 16px;
+            margin-top: 50px;
+            border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Thêm bóng đổ cho nổi */
+        }
+
+        .search-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px; /* Cách xa input ra */
+            color: #fff;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-icon-custom {
+            position: absolute;
+            left: 20px; /* Đẩy icon vào trong 1 chút */
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            font-size: 1.1rem;
+            pointer-events: none; /* Click xuyên qua icon */
+        }
+
+        .search-input-custom {
+            width: 100%;
+            background: #0a0a0a; /* Nền đen sâu hơn */
+            border: 1px solid #444;
+            color: white;
+            /* QUAN TRỌNG: Padding trái 55px để né icon */
+            padding: 15px 20px 15px 55px;
+            border-radius: 50px; /* Bo tròn viên thuốc */
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input-custom:focus {
+            border-color: var(--primary); /* Màu neon khi focus */
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            background: #000;
+        }
+
+        .search-input-custom::placeholder {
+            color: #555;
+        }
+
+        /* Dropdown kết quả giữ nguyên */
+        .search-dropdown {
+            margin-top: 10px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            max-height: 350px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .result-item {
+            display: flex; align-items: center; justify-content: space-between; padding: 10px 15px;
+            border-radius: 8px; transition: 0.2s; border-bottom: 1px solid #222; margin-top: 5px;
+        }
+        .result-item:hover { background: #252525; }
+        .btn-add-song {
+            border: 1px solid #555; background: transparent; color: white;
+            padding: 5px 20px; border-radius: 20px; font-size: 0.85rem; transition: 0.2s; cursor: pointer;
+        }
+        .btn-add-song:hover { border-color: var(--primary); color: var(--primary); }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+
+    <div class="pl-header">
+        <img th:src="${playlist.imageUrl ?: '/images/default-playlist.png'}" class="pl-cover">
+        <div class="pl-info">
+            <span class="text-uppercase fw-bold small text-white-50">Playlist</span>
+            <h1 th:text="${playlist.name}">Tên Playlist</h1>
+            <p class="text-white-50 fs-6 mt-2" th:text="${playlist.description}">Mô tả playlist</p>
+            <div class="d-flex align-items-center gap-2 text-white-50 small mt-3">
+                <span class="text-white fw-bold" th:text="${playlist.user.username}">User</span> •
+                <span th:text="${playlist.playlistSongs != null ? playlist.playlistSongs.size() : 0} + ' bài hát'">0 bài</span>
+            </div>
+
+            <div class="d-flex gap-3 mt-4">
+                <button class="btn btn-info btn-lg rounded-pill px-4 fw-bold" onclick="playAllPlaylist()">
+                    <i class="fas fa-play me-2"></i> Phát
+                </button>
+                <a th:href="@{/playlists/edit/{id}(id=${playlist.playlistId})}" class="btn btn-outline-light rounded-circle"
+                   style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-pen"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="playlistSongs">
+        <table class="song-table">
+            <thead>
+            <tr>
+                <th style="width: 50px; text-align: center;">#</th>
+                <th>Tiêu đề</th>
+                <th>Album</th>
+                <th>Ngày thêm</th>
+                <th style="width: 50px;"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="ps, iter : ${playlist.playlistSongs}" class="song-row">
+                <th:block th:with="s=${ps.song}">
+                    <td class="text-center text-muted" th:text="${iter.index + 1}">1</td>
+
+                    <td onclick="playGlobalSong('[[${s.musicUrl}]]', '[[${s.title}]]', '[[${s.artist.name}]]', '[[${s.coverImage}]]')">
+                        <div class="d-flex align-items-center">
+                            <img th:src="${s.coverImage ?: '/images/default.png'}" class="song-img">
+                            <div>
+                                <div class="song-title" th:text="${s.title}">Title</div>
+                                <div class="song-artist" th:text="${s.artist.name}">Artist</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="text-secondary small" th:text="${s.album != null ? s.album.title : '-'}">Album</td>
+                    <td class="text-secondary small">
+                        <span th:if="${ps.addedAt}" th:text="${#temporals.format(ps.addedAt, 'dd/MM/yyyy')}"></span>
+                    </td>
+
+                    <td class="text-end">
+                        <button class="btn-action btn-remove" title="Xóa khỏi playlist"
+                                th:onclick="'removeSong(' + ${s.songId} + ')'">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </th:block>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="search-area">
+        <div class="search-title">
+            <h4 class="mb-0 fw-bold"><i class="fas fa-plus-circle text-info me-2"></i>Thêm bài hát vào playlist</h4>
+        </div>
+
+        <div class="search-input-wrapper">
+            <i class="fas fa-search search-icon-custom"></i>
+
+            <input type="text" id="songSearchInput"
+                   class="search-input-custom"
+                   placeholder="Nhập tên bài hát hoặc nghệ sĩ để tìm kiếm..."
+                   autocomplete="off">
+        </div>
+
+        <div id="searchResults" class="search-dropdown"></div>
+    </div>
+</div>
+
+<th:block layout:fragment="extra-js">
+    <script th:inline="javascript">
+        const PLAYLIST_ID = /*[[${playlist.playlistId}]]*/ 0;
+        let searchTimeout = null;
+
+        function debounceSearch(keyword) {
+            clearTimeout(searchTimeout);
+            if(keyword.length < 2) {
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
+            searchTimeout = setTimeout(() => doSearch(keyword), 400);
+        }
+
+        async function doSearch(keyword) {
+            try {
+                console.log("Searching for:", keyword);
+                // Gọi API Search
+                const res = await fetch(`/playlists/search-songs?keyword=${encodeURIComponent(keyword)}`);
+
+                if (!res.ok) throw new Error("API Error: " + res.status);
+
+                const songs = await res.json();
+                console.log("Results:", songs);
+
+                const container = document.getElementById('searchResults');
+                if(songs.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted py-3">Không tìm thấy bài hát nào</div>';
+                    return;
+                }
+
+                const html = songs.map(s => `
+                    <div class="result-item">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="${s.imageUrl}" width="40" height="40" class="rounded">
+                            <div>
+                                <div class="text-white fw-bold">${s.title}</div>
+                                <div class="text-secondary small">${s.artistName}</div>
+                            </div>
+                        </div>
+                        <button class="btn-add-song" onclick="addSong(${s.songId})">
+                            <i class="fas fa-plus"></i> Thêm
+                        </button>
+                    </div>
+                `).join('');
+                container.innerHTML = html;
+
+            } catch(e) {
+                console.error(e);
+                document.getElementById('searchResults').innerHTML = '<div class="text-danger text-center">Lỗi tìm kiếm. Kiểm tra Console.</div>';
+            }
+        }
+
+        async function addSong(songId) {
+            try {
+                await fetch(`/playlists/${PLAYLIST_ID}/add-song`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `songId=${songId}`
+                });
+                location.reload();
+            } catch(e) { alert("Lỗi khi thêm bài hát"); }
+        }
+
+        async function removeSong(songId) {
+            if(!confirm("Xóa bài hát này khỏi playlist?")) return;
+            try {
+                await fetch(`/playlists/${PLAYLIST_ID}/remove-song`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `songId=${songId}`
+                });
+                location.reload();
+            } catch(e) { alert("Lỗi khi xóa bài hát"); }
+        }
+
+        function playAllPlaylist() {
+            const firstRow = document.querySelector('.song-row td[onclick]');
+            if(firstRow) firstRow.click();
+            else alert("Playlist trống!");
+        }
+
+
+
+        /* Lấy ID của playlist hiện tại từ Model (Thymeleaf) */
+        // Dùng cú pháp comment để IDE không báo lỗi
+        const currentPlaylistId = /*[[${playlist != null ? playlist.playlistId : 0}]]*/ 0;
+
+        const searchInput = document.getElementById('songSearchInput');
+        const resultsBox = document.getElementById('searchResults');
+        let timeout = null;
+
+        // 1. Lắng nghe sự kiện gõ phím
+        searchInput.addEventListener('input', function() {
+            const keyword = this.value.trim();
+
+            // Xóa timeout cũ để tránh gọi API quá nhiều (Debounce)
+            clearTimeout(timeout);
+
+            if (keyword.length < 2) {
+                resultsBox.style.display = 'none';
+                resultsBox.innerHTML = '';
+                return;
+            }
+
+            // Đợi 300ms sau khi ngừng gõ mới gọi API
+            timeout = setTimeout(() => {
+                fetchSongs(keyword);
+            }, 300);
+        });
+
+        // 2. Gọi API tìm kiếm từ Controller
+        function fetchSongs(keyword) {
+            fetch(`/playlists/search-songs?keyword=${encodeURIComponent(keyword)}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderDropdown(data);
+                })
+                .catch(err => console.error('Lỗi tìm kiếm:', err));
+        }
+
+        // 3. Hiển thị danh sách Dropdown
+        function renderDropdown(songs) {
+            resultsBox.innerHTML = ''; // Xóa kết quả cũ
+
+            if (!songs || songs.length === 0) {
+                resultsBox.style.display = 'none';
+                return;
+            }
+
+            songs.forEach(song => {
+                // Tạo phần tử HTML cho mỗi bài hát
+                const item = document.createElement('div');
+                item.className = 'search-item';
+
+                // Render HTML khớp với dữ liệu từ Controller trả về (songId, title, artistName, imageUrl)
+                item.innerHTML = `
+                <img src="${song.imageUrl}" alt="Cover">
+                <div class="search-item-info">
+                    <p class="search-item-title">${song.title}</p>
+                    <p class="search-item-artist">${song.artistName}</p>
+                </div>
+                <i class="fas fa-plus" style="color: #00CED1;"></i>
+            `;
+
+                // Sự kiện khi click vào bài hát -> Thêm vào Playlist
+                item.onclick = () => addSongToPlaylist(song.songId);
+
+                resultsBox.appendChild(item);
+            });
+
+            resultsBox.style.display = 'block';
+        }
+
+        // 4. Gọi API thêm bài hát vào Playlist
+        function addSongToPlaylist(songId) {
+            // Gửi POST request đến Controller: /{id}/add-song
+            fetch(`/playlists/${currentPlaylistId}/add-song`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `songId=${songId}`
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Đã thêm bài hát thành công!");
+                        location.reload(); // Load lại trang để thấy bài hát mới
+                    } else {
+                        alert("Có lỗi xảy ra hoặc bài hát đã tồn tại trong playlist.");
+                    }
+                })
+                .catch(err => console.error('Lỗi thêm bài hát:', err));
+        }
+
+        // 5. Ẩn dropdown khi click ra ngoài
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+                resultsBox.style.display = 'none';
+            }
+        });
+    </script>
+</th:block>
+</html>

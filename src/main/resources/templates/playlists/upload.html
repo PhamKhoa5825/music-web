@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title th:text="${playlist.playlistId != null} ? 'Cập nhật Playlist' : 'Tạo Playlist'">Quản lý Playlist</title>
+</head>
+
+<th:block layout:fragment="extra-css">
+    <style>
+        /* 1. Ẩn thanh music player */
+        #musicPlayer {
+            display: none !important;
+        }
+
+        /* 2. Xóa khoảng trống thừa dưới chân trang (do layout gốc để chừa chỗ cho player) */
+        body {
+            padding-bottom: 0 !important;
+        }
+        /* Reset đè style của layout để không bị vỡ */
+        .ai-wrapper {
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            background-color: transparent; /* Nền trong suốt để ăn theo layout */
+        }
+        .form-box { max-width: 700px; margin: 0 auto; background: #181818; padding: 40px; border-radius: 16px; border: 1px solid #333; }
+        .form-group { margin-bottom: 25px; }
+        .form-label { display: block; margin-bottom: 10px; color: #ccc; font-weight: 500; }
+        .form-control { width: 100%; padding: 12px; background: #222; border: 1px solid #444; border-radius: 8px; color: white; outline: none; transition: 0.3s; }
+        .form-control:focus { border-color: var(--primary); }
+        .upload-area { border: 2px dashed #444; padding: 20px; text-align: center; border-radius: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; height: 200px; display: flex; align-items: center; justify-content: center; flex-direction: column;}
+        .upload-area:hover { border-color: var(--primary); background: rgba(0, 243, 255, 0.05); }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; }
+        .preview-active { display: block !important; }
+        .btn-submit { background: var(--primary); color: black; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 20px; }
+        .btn-submit:hover { opacity: 0.9; }
+        .toggle-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; color: white; }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="form-box">
+        <h2 class="text-center mb-4 text-info fw-bold">
+            <i class="fas" th:classappend="${playlist.playlistId != null} ? 'fa-edit' : 'fa-plus-circle'"></i>
+            <span th:text="${playlist.playlistId != null} ? 'Cập Nhật Playlist' : 'Tạo Playlist Mới'"></span>
+        </h2>
+
+        <form th:action="@{/playlists/save}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="playlistId" th:value="${playlist.playlistId}">
+
+            <div class="form-group">
+                <label class="form-label">Tên Playlist</label>
+                <input type="text" name="name" class="form-control" th:value="${playlist.name}" required placeholder="Nhập tên playlist...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Mô tả</label>
+                <textarea name="description" class="form-control" rows="3" th:text="${playlist.description}" placeholder="Mô tả về playlist này..."></textarea>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Ảnh Bìa (Cover)</label>
+                    <div class="upload-area" onclick="document.getElementById('coverFile').click()">
+                        <img id="coverPreview" class="preview-img"
+                             th:classappend="${playlist.imageUrl != null} ? 'preview-active'"
+                             th:src="${playlist.imageUrl}">
+                        <div th:style="${playlist.imageUrl != null} ? 'display:none' : ''" id="coverPlaceholder">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #888; margin-bottom: 10px;"></i>
+                            <p class="text-secondary small mb-0">Chọn ảnh bìa</p>
+                        </div>
+                        <input type="file" name="coverFile" id="coverFile" hidden accept="image/*" onchange="preview(this, 'coverPreview', 'coverPlaceholder')">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Hình Nền (Background)</label>
+                    <div class="upload-area" onclick="document.getElementById('bgFile').click()">
+                        <img id="bgPreview" class="preview-img"
+                             th:classappend="${playlist.backgroundImage != null} ? 'preview-active'"
+                             th:src="${playlist.backgroundImage}">
+                        <div th:style="${playlist.backgroundImage != null} ? 'display:none' : ''" id="bgPlaceholder">
+                            <i class="fas fa-image" style="font-size: 2rem; color: #888; margin-bottom: 10px;"></i>
+                            <p class="text-secondary small mb-0">Chọn hình nền</p>
+                        </div>
+                        <input type="file" name="backgroundFile" id="bgFile" hidden accept="image/*" onchange="preview(this, 'bgPreview', 'bgPlaceholder')">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="toggle-switch">
+                    <input type="checkbox" name="isPublic" style="width: 20px; height: 20px;" th:checked="${playlist.isPublic}">
+                    <span>Công khai playlist này (Mọi người có thể nhìn thấy)</span>
+                </label>
+            </div>
+
+            <div class="d-flex gap-3">
+                <a href="/playlists" class="btn btn-outline-secondary flex-fill text-center" style="padding: 12px; border-radius: 8px; text-decoration: none; color: white; border: 1px solid #555;">Hủy</a>
+                <button type="submit" class="btn-submit flex-fill" style="margin-top: 0;">
+                    <i class="fas fa-save me-2"></i> Lưu Playlist
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<th:block layout:fragment="extra-js">
+    <script>
+        function preview(input, imgId, placeholderId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(imgId);
+                    const placeholder = document.getElementById(placeholderId);
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    placeholder.style.display = 'none';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+</th:block>
+</html>

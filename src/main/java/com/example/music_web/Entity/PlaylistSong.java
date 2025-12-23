@@ -1,11 +1,20 @@
 package com.example.music_web.Entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat; // 1. Import cái này
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "playlist_songs")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class PlaylistSong {
 
     @EmbeddedId
@@ -14,6 +23,7 @@ public class PlaylistSong {
     @ManyToOne
     @MapsId("playlistId")
     @JoinColumn(name = "playlist_id")
+    @JsonIgnore
     private Playlist playlist;
 
     @ManyToOne
@@ -21,11 +31,18 @@ public class PlaylistSong {
     @JoinColumn(name = "song_id")
     private Song song;
 
-    private Integer trackOrder; // Thêm trường thứ tự bài hát trong playlist
+    private Integer trackOrder;
 
-    private LocalDateTime addedAt = LocalDateTime.now(); // Thời điểm thêm vào
+    // 2. Sửa phần hiển thị ngày tháng (Để trả về JSON đẹp: "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss") // <-- THÊM DÒNG NÀY
+    @Builder.Default
+    private LocalDateTime addedAt = LocalDateTime.now();
 
-    // Getters and setters...
+    // 3. Đảm bảo khi lưu xuống DB không bao giờ bị NULL
+    @PrePersist // <-- THÊM HÀM NÀY
+    protected void onCreate() {
+        if (this.addedAt == null) {
+            this.addedAt = LocalDateTime.now();
+        }
+    }
 }
-
-

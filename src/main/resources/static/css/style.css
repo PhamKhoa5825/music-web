@@ -1,0 +1,35 @@
+/* --- 1. Fix lỗi giật trang khi chuyển giữa trang dài/ngắn --- */
+html {
+    overflow-y: scroll;
+}
+
+/* --- 2. Biến màu sắc chung --- */
+:root {
+    --primary: #00f3ff;
+    --bg-dark: #050505;
+    --border-color: #333;
+    /* ... các biến khác ... */
+}
+
+/* --- 3. Sidebar Chuẩn (Dùng cho TẤT CẢ các trang) --- */
+.sidebar {
+    width: 250px;
+    background: #000;
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+/* --- 4. Main Content Chuẩn --- */
+.main-content {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+    padding: 30px;
+    min-height: 100vh; /* Đảm bảo trang nào cũng đủ dài */
+}

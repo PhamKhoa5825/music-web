@@ -1,5 +1,6 @@
 package com.example.music_web.Entity;
 
+import com.example.music_web.enums.Provider;
 import com.example.music_web.enums.Role;
 import jakarta.persistence.*;
 import lombok.*; // Khuyên dùng Lombok cho gọn
@@ -25,7 +26,15 @@ public class User implements UserDetails { // Implements UserDetails là bắt b
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(nullable = false, unique = true, length = 50)
+    // --- THÊM MỚI ---
+    @Column(unique = true)
+    private String email; // Dùng để định danh khi login bằng Google
+
+    private String fullName; // Tên hiển thị (VD: Nguyen Van A)
+
+    @Enumerated(EnumType.STRING)
+    private Provider provider;
+    @Column(unique = true)
     private String username;
 
     @Column(nullable = false)
@@ -35,33 +44,34 @@ public class User implements UserDetails { // Implements UserDetails là bắt b
     @Column(nullable = false)
     private Role role;
 
+    @Column(columnDefinition = "boolean default false")
+    private boolean locked = false;
+
+
     @Column
     private String avatar;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    // --- THÊM MỚI: Trạng thái khóa tài khoản ---
-    @Column(columnDefinition = "boolean default false")
-    private boolean locked = false;
+    // --- CẬP NHẬT LOGIC SPRING SECURITY ---
 
-    // --- SỬA LẠI Logic Spring Security ---
+    // Spring Security mặc định hỏi "Username là gì?".
+    // Chúng ta trả về EMAIL để nó dùng Email xác thực.
     @Override
-    public boolean isAccountNonLocked() {
-        return !locked; // Nếu locked = false thì tài khoản không bị khóa (true)
+    public String getUsername() {
+        return username;
     }
 
-    // --- Logic của Spring Security ---
+    // Các hàm khác giữ nguyên
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
-
-
     @Override
     public boolean isAccountNonExpired() { return true; }
-
-
+    @Override
+    public boolean isAccountNonLocked() { return !locked; }
     @Override
     public boolean isCredentialsNonExpired() { return true; }
     @Override

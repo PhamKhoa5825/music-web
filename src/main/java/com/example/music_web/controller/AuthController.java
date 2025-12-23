@@ -2,6 +2,7 @@ package com.example.music_web.controller;
 
 import com.example.music_web.Entity.User;
 import com.example.music_web.dto.AuthDTO;
+import com.example.music_web.enums.Provider;
 import com.example.music_web.enums.Role;
 import com.example.music_web.repository.UserRepository;
 import com.example.music_web.service.SystemLogService;
@@ -49,11 +50,16 @@ public class AuthController {
             return "register";
         }
 
-        User user = User.builder()
-                .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER) // Mặc định là USER
-                .build();
+        // SỬA ĐOẠN NÀY:
+        User user = new User();
+        user.setUsername(request.getUsername());
+        //user.setEmail(request.getEmail()); // Nếu bạn có dùng email
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.USER);
+        user.setProvider(Provider.LOCAL);
+
+        // --- LOGIC MỚI: FullName mặc định bằng Username ---
+        user.setFullName(request.getUsername());
 
         userRepository.save(user);
         logService.log(user, "REGISTER", "New account registered: " + user.getUsername());

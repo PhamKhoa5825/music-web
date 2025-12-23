@@ -179,4 +179,13 @@ public class GenreController {
         }
         return "redirect:/admin/manager?tab=genres";
     }
+
+    // THÊM HÀM NÀY ĐỂ TRẢ VỀ JSON CHO JAVASCRIPT
+    @GetMapping("/api/all")
+    @ResponseBody // Báo hiệu trả về dữ liệu JSON, không phải HTML
+    public java.util.List<GenreResponse> getAllGenresApi() {
+        // Lấy tất cả thể loại (Page lớn để lấy hết)
+        Pageable pageable = PageRequest.of(0, 100, Sort.by("name").ascending());
+        return genreService.getAllGenres(null, pageable).getContent();
+    }
 }

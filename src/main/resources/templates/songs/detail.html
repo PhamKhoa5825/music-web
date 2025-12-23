@@ -34,9 +34,24 @@
                     </span>
                 </div>
 
-                <button class="btn-play-large" onclick="playSongFromDetail()">
-                    <i class="fas fa-play"></i> Play
-                </button>
+                <div class="action-buttons">
+                    <button class="btn-play-large" onclick="playSongFromDetail()">
+                        <i class="fas fa-play"></i> Play
+                    </button>
+
+                    <button class="btn-icon-circle"
+                            title="Thêm vào yêu thích"
+
+                            th:onclick="'toggleFavorite(this, ' + ${song.songId} + ')'">
+
+                        <i class="fa-heart"
+                           th:classappend="${isLiked} ? 'fas text-danger' : 'far'"
+                           th:style="${isLiked} ? 'color: #ff3366;' : 'color: white;'">
+                        </i>
+                    </button>
+                </div>
+
+
             </div>
         </div>
 
@@ -92,6 +107,9 @@
             </div>
         </div>
     </div>
+</div>
+
+<th:block layout:fragment="extra-css">
     <style>
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -115,6 +133,23 @@
             min-height: 100vh;
             color: white; /* Màu chữ mặc định */
         }
+        /* BUTTONS */
+        .action-buttons { display: flex; gap: 15px; align-items: center; }
+        .btn-play-large {
+            padding: 12px 40px; background: linear-gradient(135deg, #00CED1, #008B8B); color: #000;
+            border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 206, 209, 0.4);
+        }
+        .btn-play-large:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 206, 209, 0.6); }
+
+        .btn-icon-circle {
+            width: 50px; height: 50px; border-radius: 50%; background: transparent;
+            border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 1.2rem;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-icon-circle:hover { border-color: #00CED1; color: #00CED1; background: rgba(0, 206, 209, 0.1); }
+
         .song-detail-container {
             max-width: 1400px;
             margin: 0 auto;
@@ -476,7 +511,9 @@
             }
         }
     </style>
+</th:block>
 
+<th:block layout:fragment="extra-js">
     <script th:inline="javascript">
         // Lấy dữ liệu bài hát từ Server
         const songData = /*[[${song}]]*/ {};
@@ -560,14 +597,47 @@
                 btn.classList.remove('expanded');
             }
         }
+
+        // Thêm vào file HTML hoặc layout.html
+
+        async function toggleFavorite(btn, songId) {
+            // 1. Chặn hành động click lan ra ngoài (nếu nút nằm trong thẻ <a> hoặc div click được)
+            if (event) event.stopPropagation();
+
+            // 2. Hiệu ứng UI ngay lập tức (Optimistic UI - cho cảm giác mượt mà)
+            const icon = btn.querySelector('i');
+            const isLiked = icon.classList.contains('fas'); // Đang đặc -> là đã thích
+
+            if (isLiked) {
+                // Đang thích -> Thành không thích
+                icon.classList.remove('fas', 'text-danger'); // Xóa màu đỏ, xóa tim đặc
+                icon.classList.add('far'); // Thêm tim rỗng
+                icon.style.color = 'white'; // (Tùy chọn)
+            } else {
+                // Đang không thích -> Thành thích
+                icon.classList.remove('far');
+                icon.classList.add('fas', 'text-danger'); // Thêm màu đỏ, thêm tim đặc
+                icon.style.color = '#ff3366';
+            }
+
+            // 3. Gọi API xuống Server để lưu
+            try {
+                const response = await fetch(`/api/favorites/toggle?songId=${songId}`, {
+                    method: 'POST'
+                });
+
+                if (response.status === 401) {
+                    alert("Bạn cần đăng nhập để sử dụng tính năng này!");
+                    window.location.href = "/login";
+                } else if (!response.ok) {
+                    // Nếu lỗi server -> Đảo ngược lại icon như cũ
+                    console.error("Lỗi server, hoàn tác UI");
+                    // (Code đảo ngược lại icon tại đây nếu muốn kỹ tính)
+                }
+            } catch (error) {
+                console.error("Lỗi kết nối:", error);
+            }
+        }
     </script>
-</div>
-
-<th:block layout:fragment="extra-css">
-
-</th:block>
-
-<th:block layout:fragment="extra-js">
-
 </th:block>
 </html>

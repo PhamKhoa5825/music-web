@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Bài hát yêu thích</title>
+</head>
+
+<th:block layout:fragment="extra-css">
+    <style>
+        /* 1. Ẩn thanh music player */
+        #musicPlayer {
+            display: none !important;
+        }
+
+        /* 2. Xóa khoảng trống thừa dưới chân trang (do layout gốc để chừa chỗ cho player) */
+        body {
+            padding-bottom: 0 !important;
+        }
+        /* Reset đè style của layout để không bị vỡ */
+        .ai-wrapper {
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            background-color: transparent; /* Nền trong suốt để ăn theo layout */
+        }
+        .fav-header {
+            background: linear-gradient(135deg, #4b1050, #220526);
+            padding: 40px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .fav-cover {
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(45deg, #ff3366, #ff6b6b);
+            box-shadow: 0 10px 30px rgba(255, 51, 102, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+        .fav-cover i { font-size: 4rem; color: white; }
+
+        /* Sửa lại CSS cho danh sách chuyên nghiệp hơn */
+        .song-item {
+            transition: background 0.3s ease;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 15px !important;
+        }
+        .song-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .song-index {
+            width: 40px;
+            color: #b3b3b3;
+            font-size: 1rem;
+        }
+        .song-info img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 15px;
+        }
+        .song-title {
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .song-artist {
+            color: #b3b3b3;
+            font-size: 0.85rem;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content" class="container-fluid py-4">
+    <div class="fav-header">
+        <div class="fav-cover">
+            <i class="fas fa-heart"></i>
+        </div>
+        <div>
+            <h5 class="text-uppercase mb-2" style="letter-spacing: 2px; font-size: 0.8rem; color: #fff;">Playlist</h5>
+            <h1 class="fw-bold display-4 mb-3 text-white">Bài hát đã thích</h1>
+            <div class="d-flex align-items-center gap-2 text-white-50">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">User</span>
+                <span>•</span>
+                <span id="total-songs">0 bài hát</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row px-3 mb-2 text-uppercase text-white-50 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">
+        <div class="col-1">#</div>
+        <div class="col-11">Tiêu đề</div>
+    </div>
+    <hr class="mt-0 mb-3" style="border-color: rgba(255,255,255,0.1);">
+
+    <div id="favorites-list" class="d-flex flex-column">
+        <div class="text-center py-5">
+            <div class="spinner-border text-danger" role="status"></div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="extra-js">
+    <script th:inline="javascript">
+        const API = '/api';
+        const USER_ID = /*[[${currentUserId}]]*/ null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(!USER_ID) {
+                alert("Vui lòng đăng nhập!");
+                window.location.href="/login";
+                return;
+            }
+            loadFavorites();
+        });
+
+        async function loadFavorites() {
+            try {
+                const res = await fetch(`${API}/favorites/${USER_ID}`);
+                const data = await res.json();
+
+                document.getElementById('total-songs').innerText = `${data.length} bài hát`;
+                const listContainer = document.getElementById('favorites-list');
+
+                if (data.length === 0) {
+                    listContainer.innerHTML = '<div class="text-center text-muted py-5">Bạn chưa thích bài hát nào.</div>';
+                    return;
+                }
+
+                listContainer.innerHTML = data.map((song, index) => {
+                    const img = song.coverImage || song.imageUrl || '/images/default-song.png';
+                    const artist = song.artist ? song.artist.name : (song.artistName || 'Unknown');
+                    const musicUrl = song.musicUrl || song.filePath || '';
+
+                    const safeTitle = song.title.replace(/'/g, "\\'");
+                    const safeArtist = artist.replace(/'/g, "\\'");
+                    const safeUrl = musicUrl.replace(/'/g, "\\'");
+                    const safeImg = img.replace(/'/g, "\\'");
+
+                    return `
+                    <div class="song-item row align-items-center mx-0"
+                         onclick="playGlobalSong('${safeUrl}', '${safeTitle}', '${safeArtist}', '${safeImg}', ${song.songId})">
+
+                        <div class="col-1 song-index">${index + 1}</div>
+
+                        <div class="col-11 d-flex align-items-center song-info">
+                            <img src="${img}" alt="cover">
+                            <div>
+                                <div class="song-title">${song.title}</div>
+                                <div class="song-artist">${artist}</div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('favorites-list').innerHTML = '<div class="text-danger text-center">Lỗi tải dữ liệu</div>';
+            }
+        }
+    </script>
+</th:block>
+</html>

@@ -41,7 +41,7 @@
                            class="search-input"
                            placeholder="Search songs...">
                 </div>
-                <a href="/songs/upload?returnTab=songs" class="btn btn-add" hx-boost="false">
+                <a href="/songs/upload?returnTab=songs" class="btn btn-add">
                     <i class="fas fa-plus"></i> Add New Song
                 </a>
             </div>
@@ -75,8 +75,7 @@
                             <div class="action-buttons">
                                 <a th:href="@{/songs/{id}/edit(id=${song.songId}, returnTab='songs')}"
                                    class="btn-action btn-edit"
-                                   title="Edit"
-                                   hx-boost="false">
+                                   title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button class="btn-action btn-delete"
@@ -104,7 +103,7 @@
                            class="search-input"
                            placeholder="Search artists...">
                 </div>
-                <a href="/artists/upload?returnTab=artists" class="btn btn-add" hx-boost="false">
+                <a href="/artists/upload?returnTab=artists" class="btn btn-add">
                     <i class="fas fa-plus"></i> Add New Artist
                 </a>
             </div>
@@ -137,10 +136,9 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <a th:href="@{/artists/{id}/edit(id=${artist.artistId}, returnTab='artists')} "
+                                <a th:href="@{/artists/{id}/edit(id=${artist.artistId}, returnTab='artists')}"
                                    class="btn-action btn-edit"
-                                   title="Edit"
-                                   hx-boost="false">
+                                   title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button class="btn-action btn-delete"
@@ -168,7 +166,7 @@
                            class="search-input"
                            placeholder="Search albums...">
                 </div>
-                <a href="/albums/upload?returnTab=albums" class="btn btn-add" hx-boost="false">
+                <a href="/albums/upload?returnTab=albums" class="btn btn-add">
                     <i class="fas fa-plus"></i> Add New Album
                 </a>
             </div>
@@ -200,8 +198,7 @@
                             <div class="action-buttons">
                                 <a th:href="@{/albums/{id}/edit(id=${album.albumId}, returnTab='albums')}"
                                    class="btn-action btn-edit"
-                                   title="Edit"
-                                   hx-boost="false">
+                                   title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button class="btn-action btn-delete"
@@ -229,7 +226,7 @@
                            class="search-input"
                            placeholder="Search genres...">
                 </div>
-                <a href="/genres/upload?returnTab=genres" class="btn btn-add" hx-boost="false">
+                <a href="/genres/upload?returnTab=genres" class="btn btn-add">
                     <i class="fas fa-plus"></i> Add New Genre
                 </a>
             </div>
@@ -257,8 +254,7 @@
                             <div class="action-buttons">
                                 <a th:href="@{/genres/{id}/edit(id=${genre.genreId}, returnTab='genres')}"
                                    class="btn-action btn-edit"
-                                   title="Edit"
-                                   hx-boost="false">
+                                   title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button class="btn-action btn-delete"
@@ -289,15 +285,27 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-                <form id="deleteForm" method="post" style="display: inline;" hx-boost="false">
+                <form id="deleteForm" method="post" style="display: inline;">
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
             </div>
         </div>
     </div>
+</div>
 
-
+<th:block layout:fragment="extra-css">
     <style>
+
+        /* 1. Ẩn thanh music player */
+        #musicPlayer {
+            display: none !important;
+        }
+
+        /* 2. Xóa khoảng trống thừa dưới chân trang (do layout gốc để chừa chỗ cho player) */
+        body {
+            padding-bottom: 0 !important;
+        }
+
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background-color: #050505;
@@ -701,8 +709,9 @@
             }
         }
     </style>
+</th:block>
 
-
+<th:block layout:fragment="extra-js">
     <script th:inline="javascript">
         // Get current tab from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -788,13 +797,5 @@
             // Server sẽ redirect về đúng tab sau khi delete
         });
     </script>
-</div>
-
-<th:block layout:fragment="extra-css">
-
-</th:block>
-
-<th:block layout:fragment="extra-js">
-
 </th:block>
 </html>

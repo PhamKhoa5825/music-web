@@ -1,11 +1,17 @@
 package com.example.music_web.controller;
 
+import com.example.music_web.Entity.Comment;
+import com.example.music_web.Entity.Playlist;
+import com.example.music_web.Entity.Song;
+import com.example.music_web.Entity.User;
 import com.example.music_web.dto.request.CreateSongRequest;
 import com.example.music_web.dto.request.UpdateSongRequest;
 import com.example.music_web.dto.response.SongResponse;
-import com.example.music_web.repository.AlbumRepository;
-import com.example.music_web.repository.ArtistRepository;
-import com.example.music_web.repository.GenreRepository;
+import com.example.music_web.mapper.SongMapper;
+import com.example.music_web.repository.*;
+import com.example.music_web.service.CommentService;
+import com.example.music_web.service.InteractionService;
+import com.example.music_web.service.PlaylistService;
 import com.example.music_web.service.SongService;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -13,13 +19,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/songs")
@@ -34,6 +44,11 @@ public class SongController {
     AlbumRepository albumRepo;
     @Autowired
     GenreRepository genreRepo;
+
+    @Autowired private CommentService commentService;
+    @Autowired private InteractionService interactionService;
+    @Autowired private PlaylistService playlistService;
+    @Autowired SongRepository songRepo;
 
     @GetMapping
     public String getAllSongs(
@@ -63,16 +78,87 @@ public class SongController {
 
         model.addAttribute("currentPage", page);
         model.addAttribute("pageSize", size);
+        model.addAttribute("activeTab", "songs");
         return "songs/list";
     }
 
+    @Autowired private SongMapper songMapper;
+    @Autowired private PlaylistRepository playlistRepository;
+    @Autowired private UserRepository userRepository;
+
     @GetMapping("/{songId}")
     public String getSongById(@PathVariable Long songId, Model model) {
-        model.addAttribute("song", songService.getSongById(songId));
+        // 1. Lấy thông tin bài hát chính (Public - Ai cũng xem được)
+        SongResponse song = songService.getSongById(songId);
+        model.addAttribute("song", song);
 
+        // 2. LOGIC LẤY USER TỪ SECURITY (Thay cho userId = 1L giả định)
+        User currentUser = null;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            Object principal = auth.getPrincipal();
+            if (principal instanceof User) {
+                currentUser = (User) principal; // Tài khoản Local
+            } else if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+                // Tài khoản Google
+                String email = ((org.springframework.security.oauth2.core.user.OAuth2User) principal).getAttribute("email");
+                currentUser = userRepository.findByEmail(email).orElse(null);
+            }
+        }
+
+        // 3. Xử lý dữ liệu cá nhân hóa (Chỉ khi đã đăng nhập)
+        boolean isLiked = false;
+        List<Playlist> myPlaylists = new ArrayList<>(); // Mặc định rỗng
+
+        if (currentUser != null) {
+            // Kiểm tra Like
+            isLiked = interactionService.isLiked(currentUser.getUserId(), songId);
+
+            // Lấy danh sách Playlist của User (Để hiện popup "Thêm vào playlist")
+            // Lưu ý: Dùng Repository tìm theo User Entity
+            myPlaylists = playlistRepository.findByUser(currentUser);
+        }
+
+        model.addAttribute("isLiked", isLiked);
+        model.addAttribute("myPlaylists", myPlaylists);
+
+        // 4. Danh sách Bình luận (Public)
+        List<Comment> comments = commentService.getComments(songId, "newest");
+        model.addAttribute("comments", comments);
+
+        // 5. Gợi ý bài hát (Related Songs)
+        // Tối ưu: Dùng SongMapper thay vì hàm convert thủ công
+        List<SongResponse> relatedSongs = songRepo.findAll().stream()
+                .filter(s -> !s.getSongId().equals(songId)) // Loại trừ bài đang nghe
+                .limit(5) // Lấy 5 bài
+                .map(s -> songMapper.toSongResponse(s)) // <-- Dùng Mapper ở đây
+                .collect(Collectors.toList());
+
+        model.addAttribute("relatedSongs", relatedSongs);
+        model.addAttribute("activeTab", "songs");
+
+        // Trả về file HTML chi tiết (song-detail.html hoặc songs/detail.html tùy bạn đặt tên)
         return "songs/detail";
     }
 
+    // Hàm phụ trợ để chuyển đổi Entity sang DTO (Viết ngay trong Controller hoặc chuyển vào Service)
+    private SongResponse convertToDTO(Song entity) {
+        SongResponse dto = new SongResponse();
+        dto.setSongId(entity.getSongId());
+        dto.setTitle(entity.getTitle());
+        dto.setMusicUrl(entity.getFilePath());
+        dto.setImageUrl(entity.getCoverImage());
+        dto.setViews(entity.getViews());
+
+        // Xử lý Artist (Tránh lỗi null)
+        if (entity.getArtist() != null) {
+            dto.setArtistName(entity.getArtist().getName());
+            // Nếu DTO có object ArtistResponse thì map thêm vào đây
+        }
+
+        return dto;
+    }
 
     @PostMapping("/{songId}/delete")
     public String deleteSong(
@@ -109,12 +195,16 @@ public class SongController {
             RedirectAttributes redirectAttributes,
             Model model
     ) {
+        if (request.getFilePath() == null || request.getFilePath().isEmpty()) {
+            bindingResult.rejectValue("filePath", "error.filePath", "File audio is required!");
+        }
+
         if (bindingResult.hasErrors()) {
-            model.addAttribute("errorMessage", "Field cannot empty!!!");
             model.addAttribute("artists", artistRepo.findAll());
             model.addAttribute("albums", albumRepo.findAll());
             model.addAttribute("genres", genreRepo.findAll());
             model.addAttribute("isEdit", false);
+            model.addAttribute("song", new SongResponse());
             return "songs/upload";
         }
 
@@ -172,6 +262,10 @@ public class SongController {
             RedirectAttributes redirectAttributes,
             Model model
     ) {
+        if (request.getFilePath() == null || request.getFilePath().isEmpty()) {
+            bindingResult.rejectValue("filePath", "error.filePath", "File audio is required!");
+        }
+
         if (bindingResult.hasErrors()) {
             SongResponse song = songService.getSongById(songId);
             model.addAttribute("song", song);
