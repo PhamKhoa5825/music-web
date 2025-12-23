@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title th:text="${song.title}">Song Detail</title>
+</head>
+
+<div layout:fragment="content">
+    <div class="song-detail-container">
+
+        <div class="song-header">
+            <div class="song-cover-large">
+                <img th:src="${song.imageUrl}" alt="Cover Image" onerror="this.src='/images/default-cover.png'">
+            </div>
+
+            <div class="song-info-large">
+                <p class="song-label">Song</p>
+                <h1 class="song-title-large" th:text="${song.title}">Song Title</h1>
+
+                <div class="rating-area mb-3">
+                    <span class="stars" onclick="rate(1)">★</span>
+                    <span class="stars" onclick="rate(2)">★</span>
+                    <span class="stars" onclick="rate(3)">★</span>
+                    <span class="stars" onclick="rate(4)">★</span>
+                    <span class="stars" onclick="rate(5)">★</span>
+                    <span class="rating-text">(4.5/5 từ 120 đánh giá)</span>
+                </div>
+
+                <div class="song-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-eye"></i>
+                        <span th:text="${song.views}">0</span> views
+                    </span>
+                    <span class="meta-item" th:if="${song.uploadDate}">
+                        <i class="fas fa-calendar"></i>
+                        <span th:text="${#temporals.format(song.uploadDate, 'dd/MM/yyyy')}">Date</span>
+                    </span>
+                    <span class="meta-item" th:if="${song.albumTitle}">
+                        <i class="fas fa-compact-disc"></i>
+                        <a th:href="@{/albums/{id}(id=${song.albumId})}" class="album-link-meta" th:text="${song.albumTitle}">Album</a>
+                    </span>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-play-large" onclick="playSongFromDetail()">
+                        <i class="fas fa-play"></i> Play
+                    </button>
+
+                    <button class="btn-icon-circle" title="Thêm vào yêu thích" onclick="toggleFavorite()">
+                        <i class="far fa-heart"></i>
+                    </button>
+
+                    <button class="btn-icon-circle" title="Thêm vào playlist">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="song-content">
+
+            <div class="left-column">
+                <div class="content-box lyrics-section mb-4">
+                    <h2 class="section-title"><i class="fas fa-music"></i> Lyrics</h2>
+                    <div class="lyrics-container" id="lyricsContainer">
+                        <pre class="lyrics-text" id="lyricsText" th:text="${song.lyric}">No lyrics available</pre>
+                    </div>
+                    <button class="btn-show-more" id="showMoreBtn" onclick="toggleLyrics()">
+                        Show more <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+
+                <div class="content-box comments-section">
+                    <h2 class="section-title"><i class="fas fa-comments"></i> Bình luận</h2>
+
+                    <div class="comment-input-wrapper">
+                        <textarea class="comment-box" rows="3" placeholder="Viết cảm nghĩ của bạn..."></textarea>
+                        <button class="btn-send-comment">Gửi</button>
+                    </div>
+
+                    <div class="comment-list">
+                        <div class="comment-item">
+                            <div class="user-avatar-small">
+                                <img src="/images/default-avatar.png" alt="User">
+                            </div>
+                            <div class="comment-content">
+                                <div class="user-cmt">User A <span class="comment-time">2 giờ trước</span></div>
+                                <div class="comment-text">Bài này nghe chill quá, beat hay thực sự!</div>
+                            </div>
+                        </div>
+
+                        <div class="comment-item">
+                            <div class="user-avatar-small">
+                                <img src="/images/default-avatar.png" alt="User">
+                            </div>
+                            <div class="comment-content">
+                                <div class="user-cmt">User B <span class="comment-time">1 ngày trước</span></div>
+                                <div class="comment-text">Nhạc hay, mix tốt. Hóng bài mới.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="content-box artists-section mb-4">
+                    <h2 class="section-title"><i class="fas fa-user-music"></i> Artist</h2>
+                    <div class="artists-list">
+                        <a th:if="${song.artistId}" th:href="@{/artists/{id}(id=${song.artistId})}" class="artist-card">
+                            <div class="artist-avatar">
+                                <img th:src="${song.coverImage}" th:alt="${song.artistName}" onerror="this.src='/images/default-avatar.png'">
+                            </div>
+                            <div class="artist-info">
+                                <p class="artist-name" th:text="${song.artistName}">Artist Name</p>
+                                <p class="artist-role">Main Artist</p>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <div th:unless="${song.artistId}" class="artist-card disabled">
+                            <div class="artist-avatar"><img src="/images/default-avatar.png"></div>
+                            <div class="artist-info"><p class="artist-name">Unknown Artist</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-box related-section">
+                    <h2 class="section-title"><i class="fas fa-compact-disc"></i> Có thể bạn thích</h2>
+                    <div class="related-list">
+                        <div class="related-card" onclick="alert('Chuyển bài...')">
+                            <img src="https://via.placeholder.com/50" class="related-thumb">
+                            <div class="related-info">
+                                <div class="related-title">Tên bài hát khác</div>
+                                <div class="related-artist">Ca sĩ A</div>
+                            </div>
+                            <div class="play-hover-icon"><i class="fas fa-play"></i></div>
+                        </div>
+
+                        <div class="related-card" onclick="alert('Chuyển bài...')">
+                            <img src="https://via.placeholder.com/50" class="related-thumb">
+                            <div class="related-info">
+                                <div class="related-title">Một bài hát nữa</div>
+                                <div class="related-artist">Ca sĩ B</div>
+                            </div>
+                            <div class="play-hover-icon"><i class="fas fa-play"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="extra-css">
+    <style>
+        /* --- GIỮ NGUYÊN CSS NỀN & LAYOUT GỐC --- */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #050505;
+            background-image:
+                    radial-gradient(at 0% 0%, rgba(1, 109, 110, 0.3) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, rgba(1, 60, 60, 0.5) 0px, transparent 50%),
+                    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.02) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: white;
+        }
+        .song-detail-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+        /* HEADER LAYOUT */
+        .song-header { display: grid; grid-template-columns: 350px 1fr; gap: 3rem; margin-bottom: 3rem; align-items: end; }
+
+        .song-cover-large {
+            width: 100%; aspect-ratio: 1/1; border-radius: 20px; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(0, 243, 255, 0.1);
+        }
+        .song-cover-large img { width: 100%; height: 100%; object-fit: cover; }
+
+        .song-info-large { padding-bottom: 10px; }
+        .song-label { color: rgba(224, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; margin-bottom: 5px; }
+        .song-title-large { font-size: 4rem; font-weight: 800; color: #E0FFFF; margin: 0 0 10px 0; line-height: 1.1; text-shadow: 0 2px 20px rgba(0, 243, 255, 0.3); }
+
+        /* RATING STARS */
+        .rating-area { display: flex; align-items: center; gap: 5px; }
+        .stars { color: #ffd700; cursor: pointer; font-size: 1.5rem; transition: transform 0.2s; }
+        .stars:hover { transform: scale(1.2); }
+        .rating-text { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-left: 10px; }
+
+        .song-meta { display: flex; gap: 2rem; margin-bottom: 2rem; color: rgba(255,255,255,0.7); }
+        .meta-item i { color: #00CED1; margin-right: 5px; }
+        .album-link-meta { color: inherit; text-decoration: none; }
+        .album-link-meta:hover { color: #00CED1; text-decoration: underline; }
+
+        /* BUTTONS */
+        .action-buttons { display: flex; gap: 15px; align-items: center; }
+        .btn-play-large {
+            padding: 12px 40px; background: linear-gradient(135deg, #00CED1, #008B8B); color: #000;
+            border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 206, 209, 0.4);
+        }
+        .btn-play-large:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 206, 209, 0.6); }
+
+        .btn-icon-circle {
+            width: 50px; height: 50px; border-radius: 50%; background: transparent;
+            border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 1.2rem;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-icon-circle:hover { border-color: #00CED1; color: #00CED1; background: rgba(0, 206, 209, 0.1); }
+
+        /* CONTENT GRID */
+        .song-content { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+
+        /* GENERAL BOX STYLE */
+        .content-box {
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px);
+            border-radius: 16px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .section-title { font-size: 1.3rem; color: #E0FFFF; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .section-title i { color: #00CED1; }
+
+        /* LYRICS */
+        .lyrics-container { max-height: 300px; overflow: hidden; position: relative; transition: max-height 0.5s ease; }
+        .lyrics-container.expanded { max-height: none; }
+        .lyrics-text { font-family: inherit; line-height: 1.8; color: rgba(255,255,255,0.8); white-space: pre-wrap; margin: 0; }
+        .lyrics-container:not(.expanded)::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 80px;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8));
+        }
+        .btn-show-more { background: transparent; border: none; color: #00CED1; cursor: pointer; margin-top: 10px; font-weight: 600; }
+
+        /* ARTIST CARD */
+        .artist-card {
+            display: flex; align-items: center; gap: 15px; padding: 10px; border-radius: 12px;
+            text-decoration: none; color: white; transition: 0.3s; background: rgba(255,255,255,0.05);
+        }
+        .artist-card:hover { background: rgba(255,255,255,0.1); }
+        .artist-avatar img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+        .artist-info { flex: 1; }
+        .artist-name { font-weight: bold; margin: 0; }
+        .artist-role { font-size: 0.8rem; color: #888; margin: 0; }
+
+        /* COMMENTS */
+        .comment-input-wrapper { margin-bottom: 20px; }
+        .comment-box {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #444; color: white;
+            padding: 15px; border-radius: 8px; resize: vertical; outline: none;
+        }
+        .comment-box:focus { border-color: #00CED1; }
+        .btn-send-comment {
+            float: right; margin-top: 10px; padding: 8px 20px; background: #00CED1;
+            color: black; border: none; border-radius: 20px; font-weight: bold; cursor: pointer;
+        }
+
+        .comment-item { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; }
+        .user-avatar-small img { width: 40px; height: 40px; border-radius: 50%; }
+        .user-cmt { font-weight: bold; color: #E0FFFF; margin-bottom: 5px; font-size: 0.95rem; }
+        .comment-time { font-size: 0.75rem; color: #666; margin-left: 10px; font-weight: normal; }
+        .comment-text { color: #ccc; font-size: 0.9rem; line-height: 1.4; }
+
+        /* RELATED SONGS */
+        .related-list { display: flex; flex-direction: column; gap: 10px; }
+        .related-card {
+            display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 8px;
+            cursor: pointer; transition: 0.2s; position: relative;
+        }
+        .related-card:hover { background: rgba(255,255,255,0.1); }
+        .related-thumb { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
+        .related-info { flex: 1; }
+        .related-title { font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .related-artist { font-size: 0.8rem; color: #888; }
+        .play-hover-icon { opacity: 0; color: #00CED1; margin-right: 10px; transition: 0.2s; }
+        .related-card:hover .play-hover-icon { opacity: 1; }
+
+        /* RESPONSIVE */
+        @media (max-width: 992px) {
+            .song-header { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+            .song-content { grid-template-columns: 1fr; }
+            .song-cover-large { width: 250px; }
+            .action-buttons { justify-content: center; }
+            .song-meta { justify-content: center; }
+        }
+    </style>
+</th:block>
+
+<th:block layout:fragment="extra-js">
+    <script th:inline="javascript">
+        const songData = /*[[${song}]]*/ {};
+
+        // 1. Play Music
+        function playSongFromDetail() {
+            // Tận dụng hàm playGlobalSong từ layout.html
+            // Đảm bảo dữ liệu an toàn
+            const title = songData.title || "Unknown Title";
+            const artist = songData.artistName || (songData.artist ? songData.artist.name : "Unknown Artist");
+            const cover = songData.imageUrl || "/images/default-cover.png";
+            const url = songData.musicUrl;
+
+            if (typeof playGlobalSong === "function") {
+                playGlobalSong(url, title, artist, cover);
+            } else {
+                alert("Lỗi: Không tìm thấy trình phát nhạc (playGlobalSong)!");
+            }
+        }
+
+        // 2. Lyrics Toggle
+        function toggleLyrics() {
+            const container = document.getElementById('lyricsContainer');
+            const btn = document.getElementById('showMoreBtn');
+            container.classList.toggle('expanded');
+            if (container.classList.contains('expanded')) {
+                btn.innerHTML = 'Thu gọn <i class="fas fa-chevron-up"></i>';
+            } else {
+                btn.innerHTML = 'Xem thêm <i class="fas fa-chevron-down"></i>';
+            }
+        }
+
+        // 3. Rating Logic
+        function rate(star) {
+            // UI Update
+            const stars = document.querySelectorAll('.stars');
+            stars.forEach((s, index) => {
+                if (index < star) s.style.color = '#ffd700'; // Vàng
+                else s.style.color = '#444'; // Xám
+            });
+            // TODO: Call API save rating
+            console.log("Rated: " + star + " stars");
+            if(typeof showToast === 'function') showToast("Cảm ơn bạn đã đánh giá " + star + " sao!", "success");
+            else alert("Đã đánh giá " + star + " sao!");
+        }
+
+        // 4. Toggle Favorite
+        function toggleFavorite() {
+            // Demo UI change
+            const btn = document.querySelector('.btn-icon-circle i.fa-heart');
+            if(btn.classList.contains('far')) {
+                btn.classList.remove('far');
+                btn.classList.add('fas'); // Solid heart
+                btn.style.color = '#ff3366';
+            } else {
+                btn.classList.remove('fas');
+                btn.classList.add('far'); // Outline heart
+                btn.style.color = 'white';
+            }
+            // TODO: Call API toggle favorite
+        }
+    </script>
+</th:block>
+</html>

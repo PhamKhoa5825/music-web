@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login - Music AI</title>
+    <style>
+        :root {
+            --primary: #00f3ff;
+            --primary-dark: #00b8c4;
+            --secondary: #ff3366;
+            --bg-dark: #0a0a0a;
+            --bg-card: #111111;
+            --bg-input: #1a1a1a;
+            --text-light: #f0f0f0;
+            --text-muted: #888888;
+            --border-color: #222222;
+            --success: #00ff88;
+            --danger: #ff3333;
+            --shadow-glow: 0 0 30px rgba(0, 243, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, #050505 0%, #0a0a1a 100%);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                    radial-gradient(circle at 20% 20%, rgba(0, 243, 255, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(255, 51, 102, 0.1) 0%, transparent 50%);
+            z-index: -2;
+        }
+
+        .background-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="%2300f3ff"/></svg>');
+            background-size: 1200px 100px;
+            animation: wave 12s linear infinite;
+        }
+
+        .wave:nth-child(2) {
+            animation: wave 18s linear infinite;
+            opacity: 0.5;
+            bottom: 20px;
+        }
+
+        .wave:nth-child(3) {
+            animation: wave 24s linear infinite;
+            opacity: 0.3;
+            bottom: 40px;
+        }
+
+        @keyframes wave {
+            0% { background-position-x: 0; }
+            100% { background-position-x: 1200px; }
+        }
+
+        .container {
+            background: rgba(17, 17, 17, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            width: 420px;
+            text-align: center;
+            box-shadow: var(--shadow-glow);
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg,
+            var(--primary),
+            var(--secondary),
+            var(--primary));
+            border-radius: 22px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .container:hover::before {
+            opacity: 0.3;
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px var(--primary));
+            }
+            50% {
+                transform: scale(1.1);
+                filter: drop-shadow(0 0 20px var(--primary));
+            }
+        }
+
+        h2 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(45deg, var(--primary), #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .alert {
+            padding: 0.9rem 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            animation: slideIn 0.5s ease;
+        }
+
+        .alert.error {
+            background: rgba(255, 51, 51, 0.1);
+            border: 1px solid rgba(255, 51, 51, 0.3);
+            color: var(--danger);
+        }
+
+        .alert.success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: var(--success);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1.8rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.6rem;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            z-index: 1;
+            transition: color 0.3s ease;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3.2rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-light);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 243, 255, 0.1);
+            background: rgba(26, 26, 26, 0.9);
+        }
+
+        input:focus + .input-icon {
+            color: var(--primary);
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .remember {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .remember input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .forgot-password {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.8rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent);
+            transition: left 0.5s ease;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 243, 255, 0.3);
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        .divider {
+            margin: 2rem 0;
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg,
+            transparent,
+            var(--border-color),
+            transparent);
+        }
+
+        .divider span {
+            padding: 0 1rem;
+        }
+
+        .register-link {
+            margin-top: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .register-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .register-link a:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        .features {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: 90%;
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+
+            h2 {
+                font-size: 1.6rem;
+            }
+
+            .logo {
+                font-size: 3rem;
+            }
+
+            .features {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .remember-forgot {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="background-animation">
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+</div>
+
+<div class="container">
+    <div class="logo">🎵</div>
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Sign in to your Music AI account</p>
+
+    <div th:if="${param.error}" class="alert error">
+        <span>⚠️</span> Invalid username or password!
+    </div>
+    <div th:if="${param.logout}" class="alert success">
+        <span>✅</span> Successfully logged out.
+    </div>
+
+    <form th:action="@{/login}" method="post" id="loginForm">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <div class="input-with-icon">
+                <span class="input-icon">👤</span>
+                <input type="text" name="username" id="username"
+                       placeholder="Enter your username" required
+                       autocomplete="username">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-with-icon">
+                <span class="input-icon">🔒</span>
+                <input type="password" name="password" id="password"
+                       placeholder="Enter your password" required
+                       autocomplete="current-password">
+            </div>
+        </div>
+
+        <div class="remember-forgot">
+            <label class="remember">
+                <input type="checkbox" name="remember-me">
+                Remember me
+            </label>
+            <a href="#" class="forgot-password">Forgot password?</a>
+        </div>
+
+        <button type="submit">
+            <span></span> ACCESS SYSTEM
+        </button>
+    </form>
+
+    <div class="divider">
+        <span>OR</span>
+    </div>
+
+    <div class="register-link">
+        Don't have an account? <a href="/register">Create one now</a>
+    </div>
+
+    <div class="features">
+        <div class="feature">
+            <span class="feature-icon">🤖</span>
+            AI Music
+        </div>
+        <div class="feature">
+            <span class="feature-icon">🎧</span>
+            Personalization
+        </div>
+        <div class="feature">
+            <span class="feature-icon">⚡</span>
+            Fast & Secure
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form submission animation
+    const form = document.getElementById('loginForm');
+    form.addEventListener('submit', function(e) {
+        const button = this.querySelector('button[type="submit"]');
+        const originalText = button.innerHTML;
+
+        button.innerHTML = '<span>⏳</span> AUTHENTICATING...';
+        button.disabled = true;
+
+        // Reset button after 3 seconds if form doesn't submit
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 3000);
+    });
+
+    // Add floating effect to inputs on focus
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-3px)';
+        });
+
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Password visibility toggle (optional enhancement)
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = passwordInput.previousElementSibling;
+
+    let passwordVisible = false;
+    passwordIcon.style.cursor = 'pointer';
+
+    passwordIcon.addEventListener('click', function() {
+        passwordVisible = !passwordVisible;
+        passwordInput.type = passwordVisible ? 'text' : 'password';
+        this.textContent = passwordVisible ? '👁️' : '🔒';
+    });
+
+    // Add particle effect on hover
+    const container = document.querySelector('.container');
+    container.addEventListener('mouseenter', function() {
+        this.style.boxShadow = '0 0 40px rgba(0, 243, 255, 0.4)';
+    });
+
+    container.addEventListener('mouseleave', function() {
+        this.style.boxShadow = '0 0 30px rgba(0, 243, 255, 0.3)';
+    });
+</script>
+</body>
+</html>

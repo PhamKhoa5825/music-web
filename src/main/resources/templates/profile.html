@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>User Profile</title>
+    <style>
+        :root {
+            --primary: #00f3ff;
+            --primary-dark: #00b8c4;
+            --secondary: #ff3366;
+            --bg-dark: #0a0a0a;
+            --bg-card: #111111;
+            --bg-input: #1a1a1a;
+            --text-light: #f0f0f0;
+            --text-muted: #888888;
+            --border-color: #222222;
+            --success: #00ff88;
+            --danger: #ff3333;
+            --shadow-glow: 0 0 20px rgba(0, 243, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, #050505 0%, #0a0a1a 100%);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(0, 243, 255, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(255, 51, 102, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        header {
+            background: rgba(17, 17, 17, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(45deg, var(--primary), #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-welcome {
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+
+        .username {
+            color: var(--primary);
+            font-weight: 600;
+            position: relative;
+        }
+
+        .username::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 0.6rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 51, 51, 0.4);
+        }
+
+        .content {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: rgba(17, 17, 17, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+        }
+
+        .card h3 {
+            color: var(--primary);
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .card h3::before {
+            content: '▶';
+            font-size: 0.8rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.2rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(26, 26, 26, 0.6);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .info-value.role {
+            color: var(--primary);
+            padding: 0.3rem 1rem;
+            background: rgba(0, 243, 255, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.8rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .form-group label span {
+            color: var(--primary);
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--bg-input);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 150px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: var(--shadow-glow);
+            background: rgba(26, 26, 26, 0.9);
+        }
+
+        .btn-save {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            border: none;
+            padding: 0.8rem 2rem;
+            color: #000;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 243, 255, 0.4);
+            background: linear-gradient(45deg, var(--primary-dark), var(--primary));
+        }
+
+        .success-message {
+            color: var(--success);
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .music-visualizer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 2px;
+            padding: 0 20px;
+            z-index: -1;
+        }
+
+        .bar {
+            width: 4px;
+            background: linear-gradient(180deg, var(--primary), transparent);
+            border-radius: 2px 2px 0 0;
+            animation: equalizer 1.5s infinite ease-in-out;
+        }
+
+        .bar:nth-child(odd) { animation-delay: 0.2s; }
+        .bar:nth-child(even) { animation-delay: 0.4s; }
+
+        @keyframes equalizer {
+            0%, 100% { height: 10px; }
+            50% { height: 40px; }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 0 1rem;
+                margin: 1.5rem auto;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .user-info {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo">
+        <div class="logo-icon">🎵</div>
+        <h1>Music AI System</h1>
+    </div>
+
+    <div class="user-info">
+
+        <a th:if="${#strings.toString(role) == 'ADMIN'}"
+           href="/admin/dashboard"
+           class="btn-logout"
+           style="border-color: #00f3ff; color: #00f3ff; margin-right: 15px;">
+            ⚡ DASHBOARD
+        </a>
+
+        <div class="user-welcome">
+            Welcome, <span class="username" th:text="${username}">User</span>
+        </div>
+        <a href="/logout" class="btn-logout">
+            <span>🚪</span> LOGOUT
+        </a>
+    </div>
+</header>
+
+<div class="content">
+
+    <div class="card">
+        <h3>🖼️ Profile Picture</h3>
+        <div style="display: flex; align-items: center; gap: 2rem;">
+            <img th:src="${avatarUrl}" alt="Avatar"
+                 style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #00f3ff;">
+
+            <form th:action="@{/profile/upload-avatar}" method="post" enctype="multipart/form-data" style="flex: 1;">
+                <div class="form-group">
+                    <label>Upload new picture:</label>
+                    <input type="file" name="avatarFile" accept="image/*" required
+                           style="padding: 0.5rem; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px;">
+                </div>
+                <button type="submit" class="btn-save" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                    Upload
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🔒 Security Settings</h3>
+        <form th:action="@{/profile/change-password}" method="post">
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" name="oldPassword" required
+                       style="width: 100%; padding: 0.8rem; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 6px;">
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="newPassword" required
+                       style="width: 100%; padding: 0.8rem; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 6px;">
+            </div>
+            <button type="submit" class="btn-save" style="background: linear-gradient(45deg, #ff3366, #ff6b6b); color: white;">
+                Change Password
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${param.success}" class="success-message" style="margin-top: 1rem;">
+        <span>✅</span> <span th:text="${param.success}">Action successful!</span>
+    </div>
+    <div th:if="${param.error}" class="success-message" style="background: rgba(255, 50, 50, 0.1); border-color: red; color: red; margin-top: 1rem;">
+        <span>⚠️</span> <span th:text="${param.error}">Error occurred!</span>
+    </div>
+
+
+    <div class="card">
+        <h3>🎯 Account Information</h3>
+        <div class="info-grid">
+            <div class="info-row">
+                <span class="info-label">Username:</span>
+                <span class="info-value" th:text="${username}">admin</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Role:</span>
+                <span class="info-value role" th:text="${role}">USER</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🤖 AI Preferences</h3>
+        <form th:action="@{/profile/update}" method="post" th:object="${preference}">
+            <div class="form-group">
+                <label>
+                    <span>🎧</span> Describe your music listening habits (AI will use this data):
+                </label>
+                <textarea
+                        th:field="*{listeningPattern}"
+                        placeholder="Example: Usually listen to chill music in the morning, rock when working out, classical while studying..."
+                        maxlength="500"></textarea>
+                <div style="text-align: right; color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                    <span id="charCount">0</span>/500 characters
+                </div>
+            </div>
+            <button type="submit" class="btn-save">
+                <span>💾</span> UPDATE PREFERENCES
+            </button>
+        </form>
+        <div th:if="${param.updated}" class="success-message">
+            <span>✅</span> Preferences updated successfully!
+        </div>
+    </div>
+
+</div>
+
+<div class="music-visualizer">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+</div>
+
+<script>
+    // Character counter for textarea
+    const textarea = document.querySelector('textarea');
+    const charCount = document.getElementById('charCount');
+
+    if (textarea && charCount) {
+        textarea.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+            if (this.value.length > 450) {
+                charCount.style.color = '#ff3366';
+            } else if (this.value.length > 400) {
+                charCount.style.color = '#ffaa00';
+            } else {
+                charCount.style.color = '#888888';
+            }
+        });
+
+        // Initialize count
+        charCount.textContent = textarea.value.length;
+    }
+
+    // Animate cards on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+    });
+</script>
+</body>
+</html>

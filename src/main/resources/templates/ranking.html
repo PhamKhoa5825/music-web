@@ -1,214 +1,279 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 <head>
-    <meta charset="UTF-8">
-    <title>Bảng Xếp Hạng - MusicPro</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        :root { --bg-body: #050505; --cyan-neon: #00f3ff; --text-main: #ffffff; }
-        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
-
-        .main-content { margin-left: 240px; min-height: 100vh; display: flex; flex-direction: column; }
-
-        /* Sidebar styles sẽ được load từ fragment, nhưng giữ class main-content để đẩy nội dung */
-
-        /* Header Style */
-        .top-header { background-color: rgba(5, 5, 5, 0.95); position: sticky; top: 0; z-index: 900; padding: 15px 30px; border-bottom: 1px solid #1a1a1a; backdrop-filter: blur(10px); }
-
-        /* Rank Styles */
-        .rank-card { background: #111; border: 1px solid #333; border-radius: 8px; transition: 0.3s; }
-        .rank-card:hover { border-color: var(--cyan-neon); background: #1a1a1a; }
-        .rank-number { font-size: 2rem; font-weight: 900; -webkit-text-stroke: 1px var(--cyan-neon); color: transparent; }
-        .top-1 .rank-number { color: var(--cyan-neon); -webkit-text-stroke: 0; text-shadow: 0 0 10px var(--cyan-neon); }
-        .top-2 .rank-number { color: #00ff9d; -webkit-text-stroke: 0; }
-        .top-3 .rank-number { color: #ff0055; -webkit-text-stroke: 0; }
-
-        .filter-btn { background: transparent; border: 1px solid #444; color: #888; margin-right: 5px; }
-        .filter-btn.active { background: var(--cyan-neon); color: black; border-color: var(--cyan-neon); font-weight: bold; }
-    </style>
+    <title>Bảng Xếp Hạng</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
-<body>
 
-<div th:replace="~{fragments/sidebar :: sidebar}"></div>
+<div layout:fragment="content">
 
-<div class="main-content">
-    <div class="top-header d-flex justify-content-end align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <span class="text-secondary small">RANKING SYSTEM</span>
-            <img src="https://placehold.co/40" class="rounded-circle border border-secondary">
+    <div class="page-header">
+        <h1>Bảng Xếp Hạng</h1>
+    </div>
+
+    <div class="filter-bar" style="display: flex; justify-content: space-between; align-items: center;">
+
+        <div style="display: flex; gap: 10px;">
+            <button class="filter-select active-mode" id="btn-day" onclick="changeMode('DAY')">Hôm nay</button>
+            <button class="filter-select" id="btn-week" onclick="changeMode('WEEK')">Tuần này</button>
+            <button class="filter-select" id="btn-month" onclick="changeMode('MONTH')">Tháng này</button>
+        </div>
+
+        <div>
+            <select id="genre-select" class="filter-select" onchange="loadRanking()">
+                <option value="">Tất cả thể loại</option>
+            </select>
         </div>
     </div>
 
-    <div class="container py-5 flex-grow-1">
-        <h2 class="mb-4 text-uppercase fw-bold" style="color: var(--cyan-neon)">
-            <i class="bi bi-trophy-fill me-2"></i>Bảng Xếp Hạng
-        </h2>
-
-        <div class="d-flex flex-wrap gap-3 mb-5 align-items-center bg-dark p-3 rounded border border-secondary">
-            <div>
-                <span class="text-muted me-2 small fw-bold">THỜI GIAN:</span>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-sm filter-btn active" onclick="changeMode(this, 'DAY')">Hôm nay</button>
-                    <button type="button" class="btn btn-sm filter-btn" onclick="changeMode(this, 'WEEK')">Tuần này</button>
-                    <button type="button" class="btn btn-sm filter-btn" onclick="changeMode(this, 'MONTH')">Tháng này</button>
-                </div>
-            </div>
-            <div class="border-start border-secondary mx-2"></div>
-            <div>
-                <span class="text-muted me-2 small fw-bold">THỂ LOẠI:</span>
-                <select id="genre-select" class="form-select form-select-sm bg-black text-white border-secondary d-inline-block w-auto" onchange="loadRanking()">
-                    <option value="">Tất cả thể loại</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="ranking-list" class="d-flex flex-column gap-3"></div>
+    <div class="songs-table-container">
+        <table class="songs-table">
+            <thead>
+            <tr>
+                <th class="col-number">Hạng</th> <th class="col-title">Bài hát</th>
+                <th class="col-artist">Nghệ sĩ</th>
+                <th class="col-views">Lượt nghe</th>
+                <th class="col-album">Nghe</th> </tr>
+            </thead>
+            <tbody id="ranking-list-body">
+            <tr><td colspan="5" style="text-align: center; padding: 30px;">Đang tải...</td></tr>
+            </tbody>
+        </table>
     </div>
-
-    <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
 
-<div th:replace="~{fragments/sidebar :: create-playlist-modal}"></div>
+<th:block layout:fragment="extra-css">
+    <style>
+        /* --- COPY CSS TỪ LIST.HTML SANG --- */
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #050505;
+            /* Hiệu ứng nền xanh/đen */
+            background-image:
+                    radial-gradient(at 0% 0%, rgba(1, 109, 110, 0.3) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, rgba(1, 60, 60, 0.5) 0px, transparent 50%),
+                    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.02) 0px, transparent 50%);
+            background-attachment: fixed;
+            background-size: 100% 100%;
+            min-height: 100vh;
+            color: white;
+        }
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // [FIX] Thống nhất tên biến API
-    const API = '/api';
-    let currentMode = 'DAY';
-    const USER_ID = localStorage.getItem('music_user_id') || 1;
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-size: 2.5rem; color: #E0FFFF; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
 
-    // Sidebar Variables
-    let sidebarPlaylistsData = [];
-    let isSidebarExpanded = false;
+        /* Style cho thanh Filter */
+        .filter-bar {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(224, 255, 255, 0.1);
+        }
 
-    // --- 1. RANKING LOGIC ---
-    async function loadGenres() {
-        try {
-            const res = await fetch('/admin/api/genres');
-            const genres = await res.json();
-            const sel = document.getElementById('genre-select');
-            genres.forEach(g => sel.innerHTML += `<option value="${g.genreId}">${g.name}</option>`);
-        } catch(e){}
-    }
+        .filter-select {
+            padding: 0.6rem 1.2rem;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            border-radius: 100px;
+            color: #E0FFFF;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .filter-select:hover, .filter-select:focus {
+            background: rgba(0, 206, 209, 0.2);
+            border-color: #00CED1;
+            outline: none;
+        }
+        .filter-select option { background: #000; color: white; }
 
-    async function loadRanking() {
-        const genreId = document.getElementById('genre-select').value;
-        const container = document.getElementById('ranking-list');
-        container.innerHTML = '<div class="text-center text-info"><div class="spinner-border"></div></div>';
+        /* Class riêng cho nút đang Active (Day/Week/Month) */
+        .active-mode {
+            background: #00CED1 !important;
+            color: black !important;
+            box-shadow: 0 0 10px rgba(0, 206, 209, 0.5);
+        }
 
-        // [FIX] Sử dụng biến API đã thống nhất
-        let url = `${API}/ranking?mode=${currentMode}`;
-        if(genreId) url += `&genreId=${genreId}`;
+        /* Style Bảng (Table) */
+        .songs-table-container {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(224, 255, 255, 0.1);
+        }
+        .songs-table { width: 100%; border-collapse: collapse; }
+        .songs-table thead { background: rgba(0, 0, 0, 0.5); border-bottom: 1px solid rgba(224, 255, 255, 0.1); }
+        .songs-table th { padding: 1rem 1.5rem; text-align: left; color: rgba(224, 255, 255, 0.6); text-transform: uppercase; font-size: 0.85rem; }
+        .songs-table td { padding: 1rem 1.5rem; color: #E0FFFF; vertical-align: middle; border-bottom: 1px solid rgba(224, 255, 255, 0.05); }
+        .songs-table tbody tr:hover { background: rgba(0, 206, 209, 0.1); }
 
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            container.innerHTML = '';
-            if(data.length===0) { container.innerHTML = '<div class="text-muted text-center">Chưa có dữ liệu</div>'; return;}
+        /* Cột Tiêu đề bài hát */
+        .title-cell { display: flex; align-items: center; gap: 1rem; }
+        .song-cover { width: 50px; height: 50px; border-radius: 8px; overflow: hidden; position: relative; cursor: pointer; }
+        .song-cover img { width: 100%; height: 100%; object-fit: cover; }
 
-            data.forEach((item, index) => {
-                const s = item.song;
-                const rank = index + 1;
-                const topClass = rank <= 3 ? `top-${rank}` : '';
-                container.innerHTML += `
-                    <div class="rank-card p-3 d-flex align-items-center ${topClass}">
-                        <div class="me-4 rank-number" style="width: 40px; text-align: center;">${rank}</div>
-                        <img src="${s.coverImage || 'https://placehold.co/60'}" class="rounded me-3" width="60" height="60" style="object-fit: cover;">
-                        <div class="flex-grow-1">
-                            <h5 class="mb-1 text-white fw-bold"><a href="/song/${s.songId}" class="text-white text-decoration-none">${s.title}</a></h5>
-                            <small class="text-muted">${s.artist ? s.artist.name : 'Unknown'}</small>
-                        </div>
-                        <div class="text-end px-3">
-                            <div class="fs-5 fw-bold text-info">${item.plays}</div>
-                            <small class="text-muted" style="font-size: 0.7rem;">LƯỢT NGHE</small>
-                        </div>
-                    </div>`;
-            });
-        } catch(e) { console.error(e); }
-    }
+        .song-name { font-weight: bold; font-size: 1rem; color: white; display: block; margin-bottom: 4px; text-decoration: none; }
+        .song-name:hover { color: #00CED1; }
 
-    function changeMode(btn, mode) {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentMode = mode;
-        loadRanking();
-    }
+        /* Hiệu ứng Play Overlay giống list.html */
+        .song-cover { position: relative; overflow: hidden; cursor: pointer; }
+        .play-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: 0.3s; backdrop-filter: blur(2px);
+        }
+        .song-cover:hover .play-overlay { opacity: 1; }
+        .play-overlay i { color: white; font-size: 1.2rem; text-shadow: 0 0 10px white; }
 
-    // --- 2. SIDEBAR LOGIC (ĐÃ SỬA LỖI LOAD) ---
-    async function loadSidebarPlaylists() {
-        try {
-            const res = await fetch(`${API}/playlists/user/${USER_ID}`);
-            if(res.ok) {
-                const data = await res.json();
-                sidebarPlaylistsData = data.sort((a, b) => b.playlistId - a.playlistId);
-                renderSidebarUI();
+        /* Link bài hát */
+        .song-link { color: white; text-decoration: none; transition: 0.2s; }
+        .song-link:hover { color: #00f3ff; text-decoration: underline; }
+
+        /* --- STYLE ĐẶC BIỆT CHO TOP 1, 2, 3 --- */
+        .rank-num { font-size: 1.5rem; font-weight: bold; color: rgba(255,255,255,0.5); text-align: center; width: 40px; display: inline-block; }
+
+        .top-1 .rank-num { color: #FFD700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.6); font-size: 2rem; } /* Vàng */
+        .top-2 .rank-num { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.5); font-size: 1.8rem; } /* Bạc */
+        .top-3 .rank-num { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); font-size: 1.6rem; } /* Đồng */
+
+        .view-count { color: #00CED1; font-weight: bold; font-family: monospace; font-size: 1.1rem; }
+
+        .play-btn-sm {
+            width: 35px; height: 35px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .play-btn-sm:hover { background: #00CED1; color: black; border-color: #00CED1; transform: scale(1.1); }
+    </style>
+</th:block>
+
+<th:block layout:fragment="extra-js">
+    <script>
+        const API = '/api'; // Hoặc đường dẫn API của bạn
+        let currentMode = 'DAY';
+        let rankingDataList = []; // Lưu trữ danh sách bài hát
+
+        // 1. Load danh sách thể loại
+        async function loadGenres() {
+            try {
+                // Giả lập hoặc gọi API thật
+                const res = await fetch('/genres/api/all');
+
+                if (!res.ok) throw new Error("Lỗi HTTP: " + res.status); // Bắt lỗi 403/404
+                // Nếu API trả về mảng genre
+                const genres = await res.json();
+                const sel = document.getElementById('genre-select');
+                // Reset lại option để tránh bị duplicate nếu gọi nhiều lần
+                sel.innerHTML = '<option value="">Tất cả thể loại</option>';
+
+                genres.forEach(g => {
+                    sel.innerHTML += `<option value="${g.genreId}">${g.name}</option>`;
+                });
+            } catch(e) {
+                console.log("Không load được genre: ", e);
             }
-        } catch(e) { console.error("Sidebar load err", e); }
-    }
+        }
 
-    function renderSidebarUI() {
-        const container = document.getElementById('sidebar-playlists');
-        const btnExpand = document.getElementById('btn-sidebar-expand');
-        if(!container) return;
-        container.innerHTML = '';
+        // 2. Load bảng xếp hạng (RENDER DẠNG TABLE)
+        async function loadRanking() {
+            const genreId = document.getElementById('genre-select').value;
+            const tbody = document.getElementById('ranking-list-body');
 
-        const limit = isSidebarExpanded ? sidebarPlaylistsData.length : 5;
-        const displayList = sidebarPlaylistsData.slice(0, limit);
+            // Hiện loading
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</td></tr>';
 
-        displayList.forEach(p => {
-            container.innerHTML += `
-                <a href="/playlist/${p.playlistId}" class="nav-link text-truncate py-2 text-white-50" style="font-size: 0.9rem;">
-                    <i class="bi bi-music-note-list"></i> ${p.name}
-                </a>`;
+            // Tạo URL
+            let url = `/ranking/data?mode=${currentMode}`;
+            if(genreId) url += `&genreId=${genreId}`;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Lỗi HTTP: " + res.status); // Bắt lỗi
+                const data = await res.json();
+                rankingDataList = data; // Lưu dữ liệu vào biến toàn cục
+
+                tbody.innerHTML = ''; // Xóa loading
+
+                if(!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding:30px; color:#888;">Chưa có dữ liệu cho bảng xếp hạng này.</td></tr>';
+                    return;
+                }
+
+                // Render từng dòng (Row) thay vì Card
+                data.forEach((item, index) => {
+                    const s = item.song;
+                    const rank = index + 1;
+                    const topClass = rank <= 3 ? `top-${rank}` : ''; // Class để tô màu top 1,2,3
+
+                    // Format số view (VD: 1000 -> 1,000)
+                    const viewsFormatted = new Intl.NumberFormat().format(item.plays);
+
+                    // Xử lý an toàn dữ liệu nếu thiếu
+                    const artistName = s.artist ? s.artist.name : 'Unknown Artist';
+                    const songImg = s.coverImage || '/images/default.png';
+                    const songLink = `/songs/${s.songId}`; // Link tới trang chi tiết
+
+                    // Dùng playRankingSong(${index}) thay vì truyền chuỗi trực tiếp
+                    const tr = `
+                <tr class="${topClass}">
+                    <td class="col-number"><span class="rank-num">${rank}</span></td>
+                    <td class="col-title">
+                        <div class="title-cell">
+                            <div class="song-cover" onclick="playRankingSong(${index})">
+                                <img src="${songImg}" alt="cover">
+                                <div class="play-overlay"><i class="fas fa-play"></i></div>
+                            </div>
+                            <div>
+                                <a href="/songs/${s.songId}" class="song-name song-link">${s.title}</a>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="col-artist text-secondary">${artistName}</td>
+                    <td class="col-views"><span class="view-count">${viewsFormatted}</span></td>
+                    <td class="col-album">
+                         <button class="play-btn-sm" onclick="playRankingSong(${index})">
+                            <i class="fas fa-play"></i>
+                         </button>
+                    </td>
+                </tr>`;
+                    tbody.innerHTML += tr;
+                });
+
+            } catch(e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Lỗi tải dữ liệu.</td></tr>';
+            }
+        }
+
+        // HÀM PHÁT NHẠC MỚI (An toàn hơn)
+        function playRankingSong(index) {
+            if (!rankingDataList[index]) return;
+            const item = rankingDataList[index];
+            const s = item.song;
+            // Gọi hàm global trong layout.html
+            playGlobalSong(s.filePath, s.title, s.artist ? s.artist.name : 'Unknown', s.coverImage);
+        }
+
+        function changeMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.filter-bar button').forEach(btn => btn.classList.remove('active-mode'));
+            if(mode === 'DAY') document.getElementById('btn-day').classList.add('active-mode');
+            if(mode === 'WEEK') document.getElementById('btn-week').classList.add('active-mode');
+            if(mode === 'MONTH') document.getElementById('btn-month').classList.add('active-mode');
+            loadRanking();
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGenres();
+            loadRanking();
         });
-
-        if (sidebarPlaylistsData.length > 5) {
-            btnExpand.classList.remove('d-none');
-            btnExpand.innerHTML = isSidebarExpanded
-                ? 'Thu gọn <i class="bi bi-chevron-up ms-1"></i>'
-                : `Xem thêm (${sidebarPlaylistsData.length - 5}) <i class="bi bi-chevron-down ms-1"></i>`;
-        } else {
-            btnExpand.classList.add('d-none');
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const btnExpand = document.getElementById('btn-sidebar-expand');
-        if(btnExpand) {
-            btnExpand.addEventListener('click', () => {
-                isSidebarExpanded = !isSidebarExpanded;
-                renderSidebarUI();
-            });
-        }
-        const btnCreate = document.getElementById('btn-create-playlist');
-        if(btnCreate) {
-            btnCreate.addEventListener('click', () => {
-                document.getElementById('newPlName').value = '';
-                new bootstrap.Modal(document.getElementById('createPlModal')).show();
-            });
-        }
-    });
-
-    async function createPlaylist() {
-        const name = document.getElementById('newPlName').value;
-        const isPublic = document.getElementById('isPublicCheck').checked;
-        if(!name) return alert("Vui lòng nhập tên Playlist");
-        try {
-            await fetch(`${API}/playlists`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ userId: USER_ID, name: name, isPublic: isPublic })
-            });
-            alert("Tạo thành công!");
-            bootstrap.Modal.getInstance(document.getElementById('createPlModal')).hide();
-            loadSidebarPlaylists();
-        } catch (e) { console.error(e); }
-    }
-
-    // INIT Calls
-    loadGenres();
-    loadRanking();
-    loadSidebarPlaylists();
-</script>
-</body>
+    </script>
+</th:block>
 </html>
