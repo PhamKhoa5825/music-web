@@ -262,9 +262,6 @@ public class SongController {
             RedirectAttributes redirectAttributes,
             Model model
     ) {
-        if (request.getFilePath() == null || request.getFilePath().isEmpty()) {
-            bindingResult.rejectValue("filePath", "error.filePath", "File audio is required!");
-        }
 
         if (bindingResult.hasErrors()) {
             SongResponse song = songService.getSongById(songId);
