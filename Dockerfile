@@ -19,4 +19,7 @@ EXPOSE 8080
 # 1. -Djava.security.egd=file:/dev/./urandom  => Giúp khởi động cực nhanh trên Linux (Fix lỗi Timeout)
 # 2. -Dserver.port=8080                       => Ép chạy port 8080
 # 3. -Dserver.address=0.0.0.0                 => Mở kết nối ra ngoài để Render thấy
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-Dserver.port=8080", "-Dserver.address=0.0.0.0", "-jar", "app.war"]
+# ... (Các phần trên giữ nguyên)
+
+# THÊM THAM SỐ -Xmx350m VÀO ĐẦU
+ENTRYPOINT ["java", "-Xmx350m", "-Djava.security.egd=file:/dev/./urandom", "-Dserver.port=8080", "-Dserver.address=0.0.0.0", "-jar", "app.war"]
