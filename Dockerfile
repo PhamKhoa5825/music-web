@@ -11,5 +11,9 @@ FROM eclipse-temurin:17-jdk-focal
 WORKDIR /app
 # Copy file war vừa build ở trên sang đây, đổi tên thành app.war
 COPY --from=build /app/target/*.war app.war
+# ... (các phần trên giữ nguyên)
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.war"]
+
+# SỬA DÒNG ENTRYPOINT THÀNH NHƯ SAU:
+ENTRYPOINT ["java", "-Dserver.port=8080", "-Dserver.address=0.0.0.0", "-jar", "app.war"]
